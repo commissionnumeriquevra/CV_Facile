@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de CV Professionnel</title>
+    <style>
+        :root {
+            --primary-color: #1e293b;
+            --cv-font-size: 14px;
+        }
+
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; background-color: #e2e8f0; }
+        
+        .editor { width: 420px; background: #ffffff; padding: 25px; box-shadow: 2px 0 15px rgba(0,0,0,0.1); overflow-y: auto; display: flex; flex-direction: column; gap: 15px; z-index: 10; }
+        .editor h2 { margin-top: 0; color: #1e293b; font-size: 22px; margin-bottom: 5px; }
+        
+        .progress-wrapper { width: 100%; background-color: #cbd5e1; border-radius: 8px; height: 22px; overflow: hidden; margin-bottom: 10px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); }
+        .progress-fill { background-color: #10b981; height: 100%; width: 0%; transition: width 0.4s ease-out, background-color 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold; text-shadow: 0 1px 1px rgba(0,0,0,0.3); }
+
+        .form-row { display: flex; gap: 10px; }
+        .form-row .form-group { flex: 1; }
+
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-weight: 600; margin-bottom: 5px; font-size: 13px; color: #475569; text-transform: uppercase; }
+        .form-group label span { font-weight: normal; font-size: 11px; color: #94a3b8; text-transform: none; float: right; transition: color 0.3s; }
+        .form-group input, .form-group textarea, .form-group select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit; background: #f8fafc; }
+        
+        input[type="color"] { padding: 2px; height: 40px; cursor: pointer; width: 100%; }
+        
+        .highlight-select { border-color: #0ea5e9 !important; background-color: #f0f9ff !important; font-weight: bold; }
+        .task-select { border-color: #f59e0b !important; background-color: #fffbeb !important; margin-bottom: 5px; font-weight: 600; color: #b45309; }
+        
+        .form-group input[type="file"] { background: #fff; padding: 5px; }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        
+        .photo-slider { display: none; width: 100%; margin-top: 8px; accent-color: var(--primary-color); cursor: pointer; }
+        .photo-slider-label { display: none; font-size: 11px; color: #64748b; margin-top: 2px; text-align: center; }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-action { flex: 1; color: white; border: none; padding: 12px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background 0.2s; text-align: center; }
+        .btn-pdf { background-color: #0ea5e9; }
+        .btn-pdf:hover { background-color: #0284c7; }
+        .btn-word { background-color: #2563eb; }
+        .btn-word:hover { background-color: #1d4ed8; }
+
+        .preview-container { flex: 1; display: flex; justify-content: center; align-items: flex-start; padding: 40px; overflow-y: auto; }
+        
+        .cv-preview { 
+            width: 21cm; 
+            height: 29.7cm; 
+            background: white; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2); 
+            box-sizing: border-box; 
+            position: relative; 
+            font-size: var(--cv-font-size); 
+            overflow: hidden; 
+            display: flex;
+        }
+        
+        .preserve-lines { white-space: pre-wrap; line-height: 1.5; }
+        
+        .cv-photo { 
+            width: 120px; 
+            height: 120px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            object-position: 50% 20%; 
+            display: none; 
+            border: 3px solid #fff; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            margin: 0 auto; 
+        }
+
+        /* -- MODÈLE 1 : PROFIL & COMPÉTENCES -- */
+        .format-competences { flex-direction: row; color: #334155; font-family: var(--cv-font, 'Helvetica Neue', Helvetica, Arial, sans-serif); }
+        .format-competences .cv-sidebar { width: 35%; background-color: var(--primary-color); color: #f8fafc; padding: 2cm 1cm; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; text-align: center; gap: 35px; }
+        .format-competences .cv-main { width: 65%; padding: 2cm 1.5cm; background-color: #fff; display: flex; flex-direction: column; justify-content: flex-start; gap: 35px; }
+        .format-competences .cv-header-mobile { width: 100%; }
+        .format-competences .cv-name { font-size: calc(var(--cv-font-size) * 1.7); margin: 0 0 5px 0; color: #fff; text-transform: uppercase; }
+        .format-competences .cv-title { font-size: calc(var(--cv-font-size) * 1.15); font-weight: bold; margin-bottom: 15px; opacity: 0.9; }
+        .format-competences .cv-contact { font-size: calc(var(--cv-font-size) * 0.95); opacity: 0.8; margin-bottom: 0; }
+        .format-competences h3 { font-size: calc(var(--cv-font-size) * 1.15); border-bottom: 2px solid var(--primary-color); padding-bottom: 5px; color: var(--primary-color); text-transform: uppercase; margin-top: 0; margin-bottom: 15px; }
+        .format-competences .cv-sidebar h3 { color: #fff; border-bottom-color: rgba(255,255,255,0.3); width: 100%; text-align: left; }
+        .format-competences .sidebar-section { width: 100%; text-align: left; }
+        .format-competences .cv-section { margin-bottom: 0; }
+
+        /* -- MODÈLE 2 : CORPORATE -- */
+        .format-corporate { flex-direction: column; color: #1a1a1a; font-family: var(--cv-font, Georgia, 'Times New Roman', Times, serif); }
+        .format-corporate .cv-main { padding: 2cm; width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 25px; }
+        .format-corporate .cv-header { display: flex; align-items: center; border-bottom: 3px solid var(--primary-color); padding-bottom: 20px; margin-bottom: 5px; }
+        .format-corporate .header-text { flex: 1; }
+        .format-corporate .cv-name { font-size: calc(var(--cv-font-size) * 2.3); margin: 0; text-transform: uppercase; letter-spacing: 1px; color: var(--primary-color); }
+        .format-corporate .cv-title { font-size: calc(var(--cv-font-size) * 1.3); font-style: italic; color: #4a4a4a; margin-top: 5px; }
+        .format-corporate .cv-contact { margin-top: 10px; font-size: var(--cv-font-size); }
+        .format-corporate h3 { font-size: calc(var(--cv-font-size) * 1.15); text-transform: uppercase; color: var(--primary-color); background-color: #f1f5f9; padding: 8px 10px; border-left: 4px solid var(--primary-color); margin-top: 0; margin-bottom: 15px; }
+        .format-corporate .cv-section { margin-bottom: 0; }
+
+        /* -- MODÈLE 3 : ÉPURÉ -- */
+        .format-epure { flex-direction: column; color: #2d3748; font-family: var(--cv-font, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif); }
+        .format-epure .cv-main { padding: 2cm 2.5cm; width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 30px; }
+        .format-epure .cv-header { text-align: center; margin-bottom: 10px; }
+        .format-epure .cv-photo { margin: 0 auto 15px auto; border-color: var(--primary-color); display: block; }
+        .format-epure .cv-name { font-size: calc(var(--cv-font-size) * 2.5); font-weight: 300; margin: 0; letter-spacing: 2px; }
+        .format-epure .cv-title { font-size: calc(var(--cv-font-size) * 1.3); color: var(--primary-color); margin-top: 5px; font-weight: 500; }
+        .format-epure .cv-contact { margin-top: 15px; font-size: var(--cv-font-size); color: #718096; }
+        .format-epure h3 { font-size: calc(var(--cv-font-size) * 1.4); color: var(--primary-color); border-bottom: 1px solid var(--primary-color); padding-bottom: 10px; font-weight: 600; margin-top: 0; margin-bottom: 15px; }
+        .format-epure .cv-section { margin-bottom: 0; }
+
+        /* -- MODÈLE 4 : MINIMALISTE (Très lisible, Fort Contraste) -- */
+        .format-minimaliste { flex-direction: column; color: #000; font-family: var(--cv-font, Arial, sans-serif); }
+        .format-minimaliste .cv-main { padding: 2cm 2.5cm; width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 20px; }
+        .format-minimaliste .cv-header { display: flex; align-items: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 10px; }
+        .format-minimaliste .header-text { flex: 1; }
+        .format-minimaliste .cv-photo { margin: 0 20px 0 0; border: 2px solid #000; border-radius: 0; box-shadow: none; display: block; }
+        .format-minimaliste .cv-name { font-size: calc(var(--cv-font-size) * 2.2); font-weight: bold; margin: 0; text-transform: uppercase; color: #000; }
+        .format-minimaliste .cv-title { font-size: calc(var(--cv-font-size) * 1.3); font-weight: normal; margin-top: 5px; color: #333; }
+        .format-minimaliste .cv-contact { margin-top: 10px; font-size: var(--cv-font-size); }
+        .format-minimaliste h3 { font-size: calc(var(--cv-font-size) * 1.2); color: #000; text-transform: uppercase; border-bottom: 1px dashed #000; padding-bottom: 5px; margin-top: 0; margin-bottom: 15px; }
+        .format-minimaliste .cv-section { margin-bottom: 0; }
+
+        /* -- MODÈLE 5 : CRÉATIF -- */
+        .format-creatif { flex-direction: column; color: #374151; font-family: var(--cv-font, 'Trebuchet MS', sans-serif); border-left: 1.5cm solid var(--primary-color); }
+        .format-creatif .cv-main { padding: 2cm 2cm; width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 25px; }
+        .format-creatif .cv-header { display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .format-creatif .header-text { flex: 1; text-align: left; }
+        .format-creatif .cv-photo { margin: 0 0 0 20px; border: none; border-radius: 10px; box-shadow: 4px 4px 0px var(--primary-color); display: block; }
+        .format-creatif .cv-name { font-size: calc(var(--cv-font-size) * 2.4); font-weight: 900; margin: 0; color: var(--primary-color); letter-spacing: -1px; }
+        .format-creatif .cv-title { font-size: calc(var(--cv-font-size) * 1.3); font-weight: bold; margin-top: 5px; color: #4b5563; }
+        .format-creatif .cv-contact { margin-top: 15px; font-size: var(--cv-font-size); color: #6b7280; border-left: 3px solid var(--primary-color); padding-left: 10px; }
+        .format-creatif h3 { font-size: calc(var(--cv-font-size) * 1.2); color: #fff; background-color: var(--primary-color); display: inline-block; padding: 6px 15px; border-radius: 20px; margin-top: 0; margin-bottom: 15px; }
+        .format-creatif .cv-section { margin-bottom: 0; }
+
+        @page { size: A4; margin: 0; }
+        
+        @media print {
+            body { background: white; height: auto; display: block; }
+            .editor { display: none !important; }
+            .preview-container { padding: 0; display: block; }
+            
+            .cv-preview { 
+                box-shadow: none; 
+                width: 21cm; 
+                height: 29.7cm; 
+                max-height: 29.7cm;
+                margin: 0;
+                overflow: hidden; 
+                page-break-after: avoid;
+                page-break-inside: avoid;
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
+            }
+
+            .cv-photo {
+                width: 120px !important;
+                height: 120px !important;
+                max-width: 120px !important;
+                max-height: 120px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="editor">
+        <h2>Créer son CV</h2>
+        
+        <div class="progress-wrapper">
+            <div class="progress-fill" id="progress-bar">0%</div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Modèle de CV</label>
+                <select id="format-selector">
+                    <option value="format-competences">Profil & Compétences</option>
+                    <option value="format-corporate">Corporate (Classique)</option>
+                    <option value="format-epure">Épuré & Moderne</option>
+                    <option value="format-minimaliste">Minimaliste (Très lisible)</option>
+                    <option value="format-creatif">Créatif (Design original)</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex: 0.4;">
+                <label>Couleur</label>
+                <input type="color" id="color-picker" value="#1e293b">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Police de texte</label>
+                <select id="font-family-selector">
+                    <option value="">Par défaut</option>
+                    <option value="Arial, sans-serif">Arial</option>
+                    <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</option>
+                    <option value="Verdana, sans-serif">Verdana</option>
+                    <option value="Tahoma, sans-serif">Tahoma</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="'Times New Roman', serif">Times New Roman</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex: 0.6;">
+                <label>Taille</label>
+                <select id="font-size-selector">
+                    <option value="9px">9</option>
+                    <option value="10px">10</option>
+                    <option value="11px">11</option>
+                    <option value="12px">12</option>
+                    <option value="13px">13</option>
+                    <option value="14px" selected>14</option>
+                    <option value="15px">15</option>
+                    <option value="16px">16</option>
+                </select>
+            </div>
+        </div>
+
+        <hr style="border: 1px solid #e2e8f0; width: 100%; margin: 5px 0;">
+
+        <div class="form-group">
+            <label>Secteur d'activité (Modèles)</label>
+            <select id="template-selector" class="highlight-select">
+                <option value="vide">-- Choisir un modèle --</option>
+                <optgroup label="Étudiants & Stages">
+                    <option value="stage_decouverte">Stage de Découverte (3ème)</option>
+                    <option value="stage_etudiant">Étudiant(e) - Recherche de stage</option>
+                    <option value="alternance">Recherche d'Alternance</option>
+                </optgroup>
+                <optgroup label="Santé & Social">
+                    <option value="infirmier">Infirmier(ère) (IDE)</option>
+                    <option value="aide_soignant">Aide-Soignant(e)</option>
+                    <option value="secretaire_medical">Secrétaire Médical(e)</option>
+                    <option value="ash">Agent de Service Hosp. (ASH)</option>
+                    <option value="brancardier">Brancardier(ère)</option>
+                    <option value="auxiliaire_vie">Auxiliaire de Vie (AVS)</option>
+                    <option value="ambulancier">Ambulancier(ère)</option>
+                </optgroup>
+                <optgroup label="Enfance & Animation">
+                    <option value="garde_enfants">Garde d'enfants / Assmat</option>
+                    <option value="atsem">Agent(e) ATSEM (École maternelle)</option>
+                    <option value="auxiliaire_puericulture">Auxiliaire de Puériculture</option>
+                    <option value="animateur">Animateur(trice) Périscolaire</option>
+                </optgroup>
+                <optgroup label="Administration, RH & Bureau">
+                    <option value="agent_administratif">Agent(e) Administratif(ve)</option>
+                    <option value="secretaire">Secrétaire / Assistant(e)</option>
+                    <option value="assistant_direction">Assistant(e) de Direction</option>
+                    <option value="assistant_rh">Assistant(e) Ressources Humaines</option>
+                    <option value="comptable">Aide-comptable</option>
+                    <option value="teleconseiller">Téléconseiller(ère)</option>
+                    <option value="accueil">Agent(e) d'Accueil</option>
+                </optgroup>
+                <optgroup label="Commerce & Vente">
+                    <option value="vendeur">Vendeur(se) en magasin</option>
+                    <option value="hote_caisse">Hôte(sse) de Caisse</option>
+                    <option value="employe_rayon">Employé(e) Libre-Service</option>
+                    <option value="boulanger">Boulanger(ère)</option>
+                    <option value="patissier">Pâtissier(ère)</option>
+                    <option value="boucher">Boucher(ère) / Charcutier(ère)</option>
+                    <option value="fleuriste">Fleuriste</option>
+                    <option value="agent_immobilier">Agent(e) Immobilier / Négociateur</option>
+                </optgroup>
+                <optgroup label="Beauté & Bien-être">
+                    <option value="coiffeur">Coiffeur(se)</option>
+                    <option value="estheticienne">Esthéticien(ne) / Conseiller(ère) Beauté</option>
+                </optgroup>
+                <optgroup label="Hôtellerie & Restauration">
+                    <option value="serveur">Serveur(se) en Restauration</option>
+                    <option value="barman">Barman / Barmaid</option>
+                    <option value="cuisinier">Cuisinier(ère) / Commis</option>
+                    <option value="plongeur">Employé(e) de Plonge</option>
+                    <option value="receptionniste">Réceptionniste (Hôtellerie)</option>
+                    <option value="femme_chambre">Valet / Femme de chambre</option>
+                    <option value="restauration_rapide">Équipier(ère) Restauration Rapide</option>
+                </optgroup>
+                <optgroup label="Logistique & Transport">
+                    <option value="preparateur">Préparateur(trice) de Commandes</option>
+                    <option value="cariste">Cariste (CACES)</option>
+                    <option value="chauffeur">Chauffeur-Livreur (VL/PL)</option>
+                    <option value="conducteur_bus">Conducteur(trice) de Bus/Car</option>
+                    <option value="magasinier">Magasinier(ère)</option>
+                    <option value="manutentionnaire">Manutentionnaire</option>
+                </optgroup>
+                <optgroup label="Bâtiment & Nettoyage">
+                    <option value="agent_entretien">Agent(e) d'Entretien</option>
+                    <option value="ouvrier_batiment">Ouvrier(ère) du Bâtiment</option>
+                    <option value="peintre">Peintre en Bâtiment</option>
+                    <option value="plombier">Plombier(ère) / Chauffagiste</option>
+                    <option value="electricien">Électricien(ne) en Bâtiment</option>
+                    <option value="menuisier">Menuisier(ère) / Poseur</option>
+                    <option value="mecanicien">Mécanicien(ne) Automobile</option>
+                    <option value="carrossier">Carrossier(ère) / Peintre Auto</option>
+                    <option value="agent_securite">Agent(e) de Sécurité</option>
+                    <option value="jardinier">Jardinier(ère) / Paysagiste</option>
+                </optgroup>
+                <optgroup label="Informatique & Numérique">
+                    <option value="developpeur_web">Développeur(se) Web</option>
+                    <option value="technicien_informatique">Technicien(ne) Support Informatique</option>
+                    <option value="community_manager">Community Manager</option>
+                    <option value="graphiste">Graphiste / Webdesigner</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Photo (Optionnelle)</label>
+            <input type="file" id="input-photo" accept="image/*">
+            <input type="range" id="photo-offset" class="photo-slider" min="0" max="100" value="20" title="Ajuster le visage de haut en bas">
+            <div id="photo-slider-label" class="photo-slider-label">Ajuster le visage (Haut / Bas)</div>
+        </div>
+
+        <div class="form-group"><label>Prénom & Nom <span id="count-name"></span></label><input type="text" id="input-name" maxlength="50" value="Prénom NOM" oninput="updateCV('input-name', 'out-name')"></div>
+        <div class="form-group"><label>Titre visé <span id="count-title"></span></label><input type="text" id="input-title" maxlength="80" oninput="updateCV('input-title', 'out-title')"></div>
+        <div class="form-group"><label>Coordonnées <span id="count-contact"></span></label><input type="text" id="input-contact" maxlength="100" value="06 00 00 00 00 | prenom.nom@email.com | Ville" oninput="updateCV('input-contact', 'out-contact')"></div>
+        
+        <div class="form-group"><label>Qualités & Compétences <span id="count-skills"></span></label><textarea id="input-skills" maxlength="300" oninput="updateCV('input-skills', 'out-skills')"></textarea></div>
+        <div class="form-group"><label>Accroche / Profil <span id="count-profile"></span></label><textarea id="input-profile" maxlength="400" oninput="updateCV('input-profile', 'out-profile')"></textarea></div>
+        
+        <div class="form-group">
+            <label>Expériences professionnelles <span id="count-exp"></span></label>
+            <select id="task-adder" class="task-select">
+                <option value="">+ Ajouter une tâche / mission suggérée...</option>
+            </select>
+            <textarea id="input-exp" maxlength="800" oninput="updateCV('input-exp', 'out-exp')"></textarea>
+        </div>
+        
+        <div class="form-group"><label>Formations / Diplômes <span id="count-edu"></span></label><textarea id="input-edu" maxlength="300" oninput="updateCV('input-edu', 'out-edu')">Année - Intitulé du Diplôme ou de la Formation
+Établissement - Ville</textarea></div>
+
+        <div class="form-group"><label>Langues <span id="count-langues"></span></label><textarea id="input-langues" maxlength="200" oninput="updateCV('input-langues', 'out-langues')">Français - Langue maternelle
+Anglais - Niveau B1</textarea></div>
+
+        <div class="form-group"><label>Centres d'intérêt <span id="count-interets"></span></label><textarea id="input-interets" maxlength="200" oninput="updateCV('input-interets', 'out-interets')">Sport, lecture, voyages</textarea></div>
+
+        <div class="btn-group">
+            <button class="btn-action btn-pdf" onclick="window.print()">Export PDF</button>
+            <button class="btn-action btn-word" onclick="exportWord()">Export Word</button>
+        </div>
+    </div>
+
+    <div class="preview-container">
+        <div id="cv-preview" class="cv-preview format-competences">
+            <div class="cv-sidebar">
+                <img id="out-photo" class="cv-photo" alt="Photo">
+                <div class="cv-header-mobile">
+                    <h1 class="cv-name" id="out-name">Prénom NOM</h1>
+                    <div class="cv-title" id="out-title">Titre du poste</div>
+                    <div class="cv-contact" id="out-contact">06 00 00 00 00 | prenom.nom@email.com | Ville</div>
+                </div>
+                <div class="sidebar-section">
+                    <h3>Compétences</h3>
+                    <div id="out-skills" class="preserve-lines"></div>
+                </div>
+            </div>
+            <div class="cv-main">
+                <div class="cv-header">
+                    <div class="header-text">
+                        <h1 class="cv-name header-desktop" id="out-name-desktop" style="display: none;">Prénom NOM</h1>
+                        <div class="cv-title header-desktop" id="out-title-desktop" style="display: none;">Titre du poste</div>
+                        <div class="cv-contact header-desktop" id="out-contact-desktop" style="display: none;">06 00 00 00 00 | prenom.nom@email.com | Ville</div>
+                    </div>
+                </div>
+                <div class="cv-section">
+                    <h3>Profil</h3>
+                    <div id="out-profile" class="preserve-lines"></div>
+                </div>
+                <div class="cv-section">
+                    <h3>Expériences Professionnelles</h3>
+                    <div id="out-exp" class="preserve-lines"></div>
+                </div>
+                <div class="cv-section">
+                    <h3>Formations</h3>
+                    <div id="out-edu" class="preserve-lines"></div>
+                </div>
+                <div class="cv-section">
+                    <h3>Langues</h3>
+                    <div id="out-langues" class="preserve-lines"></div>
+                </div>
+                <div class="cv-section">
+                    <h3>Centres d'intérêt</h3>
+                    <div id="out-interets" class="preserve-lines"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateProgress() {
+            const fieldsToTrack = ['input-name', 'input-title', 'input-contact', 'input-skills', 'input-profile', 'input-exp', 'input-edu'];
+            let filledCount = 0;
+            fieldsToTrack.forEach(id => {
+                const element = document.getElementById(id);
+                if (element && element.value.trim().length > 3) filledCount++;
+            });
+            let percent = Math.round((filledCount / fieldsToTrack.length) * 100);
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = percent + '%';
+            progressBar.textContent = percent + '%';
+            if (percent < 40) { progressBar.style.backgroundColor = '#ef4444'; } 
+            else if (percent < 80) { progressBar.style.backgroundColor = '#f59e0b'; } 
+            else { progressBar.style.backgroundColor = '#10b981'; }
+        }
+
+        document.getElementById('color-picker').addEventListener('input', function(e) {
+            document.documentElement.style.setProperty('--primary-color', e.target.value);
+        });
+
+        document.getElementById('font-family-selector').addEventListener('change', function(e) {
+            if (e.target.value === "") {
+                document.documentElement.style.removeProperty('--cv-font');
+            } else {
+                document.documentElement.style.setProperty('--cv-font', e.target.value);
+            }
+        });
+
+        document.getElementById('font-size-selector').addEventListener('change', function(e) {
+            document.documentElement.style.setProperty('--cv-font-size', e.target.value);
+        });
+
+        const jobTemplates = {
+            "stage_decouverte": { title: "Recherche de Stage de Découverte (3ème)", skills: "- Curiosité intellectuelle et envie d'apprendre\n- Ponctualité, politesse et respect des règles\n- Bonne maîtrise des outils informatiques de base\n- Esprit d'équipe et d'entraide\n- Sens de l'observation et écoute active", profile: "Actuellement en classe de 3ème, je suis à la recherche d'un stage d'observation pour découvrir le monde professionnel. Dynamique et volontaire, je souhaite m'immerger dans votre secteur d'activité pour affiner mon projet d'orientation.", exp: "Bénévolat / Projets scolaires :\n- Participation à l'organisation d'un événement au sein du collège\n- Réalisation de travaux de groupe nécessitant organisation et rigueur\n- Implication dans la vie associative locale (sport, culture)" },
+            "stage_etudiant": { title: "Étudiant(e) - Recherche de stage", skills: "- Capacité d'analyse, de synthèse et de recherche\n- Maîtrise des outils numériques et collaboratifs\n- Aisance relationnelle et excellente communication écrite/orale\n- Grande adaptabilité aux nouveaux environnements\n- Esprit d'initiative et force de proposition", profile: "Dans le cadre de ma formation, je recherche un stage pour mettre en pratique mes connaissances académiques et développer de nouvelles compétences sur le terrain. Autonome et rigoureux(se), j'ai à cœur de m'investir pleinement dans les missions qui me seront confiées.", exp: "Projets étudiants et engagements :\n- Conduite de projets tutorés en lien avec ma filière d'études\n- Jobs d'été ou emplois étudiants ayant développé mon sens des responsabilités\n- Rédaction de dossiers thématiques et présentations orales" },
+            "alternance": { title: "Recherche d'Alternance", skills: "- Motivation à allier théorie scolaire et pratique en entreprise\n- Fiabilité, ponctualité et maturité professionnelle\n- Sens de l'organisation pour gérer le rythme école/entreprise\n- Capacité à assimiler rapidement de nouvelles méthodes de travail\n- Investissement sur le long terme", profile: "Souhaitant me professionnaliser rapidement, je recherche une entreprise d'accueil pour réaliser ma formation en alternance. Véritable collaborateur(trice) en devenir, je suis prêt(e) à m'engager avec sérieux pour contribuer activement à vos objectifs.", exp: "Expériences précédentes :\n- Découverte du monde du travail lors de stages ou d'emplois saisonniers\n- Travail en équipe et respect des consignes hiérarchiques\n- Sensibilisation aux enjeux de l'entreprise (qualité, sécurité, relation client)" },
+            "infirmier": { title: "Infirmier(ère) (IDE)", skills: "- Réalisation de soins techniques (prélèvements, perfusions, pansements)\n- Surveillance clinique de l'état de santé et de l'évolution des patients\n- Distribution sécurisée et traçabilité des traitements médicamenteux\n- Respect absolu des protocoles d'hygiène et du secret médical\n- Grande résistance au stress et maîtrise de soi face aux urgences", profile: "Professionnel(le) de santé dévoué(e) et rigoureux(se), j'assure la prise en charge globale des patients avec sécurité et humanité. Doté(e) d'un excellent esprit d'équipe, je collabore étroitement avec les médecins et les équipes d'aides-soignants.", exp: "2020 - Présent : Infirmier(ère) Diplômé(e) d'État\n- Accompagnement thérapeutique et soutien psychologique des patients et de leurs familles\n- Mise à jour rigoureuse des dossiers de soins informatisés (DSI)\n- Éducation thérapeutique du patient (diabète, traitements longs)\n- Gestion des stocks de pharmacie et de matériel médical du service" },
+            "aide_soignant": { title: "Aide-Soignant(e)", skills: "- Réalisation des soins d'hygiène et de confort avec douceur\n- Aide à la mobilisation, aux transferts et à la prise de repas\n- Observation et recueil de données sur l'état de santé du patient\n- Empathie, patience et grand respect de la dignité humaine\n- Esprit d'équipe et communication avec le personnel médical", profile: "Profondément humain(e) et dévoué(e) au bien-être des personnes fragilisées, j'exerce mon métier avec bienveillance et professionnalisme. Je suis vigilant(e) à la sécurité des soins et j'ai le sens de l'observation.", exp: "2020 - Présent : Aide-soignant(e) (EHPAD / Hôpital)\n- Accompagnement bienveillant des résidents dans les gestes de la vie quotidienne\n- Distribution des repas et assistance attentive lors de la prise\n- Transmission précise des observations à l'équipe infirmière\n- Réfection des lits et maintien d'un environnement propre et sécurisé" },
+            "secretaire_medical": { title: "Secrétaire Médical(e)", skills: "- Accueil physique et téléphonique, orientation et réassurance des patients\n- Maîtrise des logiciels de gestion de cabinet (Doctolib, Maiia, logiciels métiers)\n- Frappe rapide et précise de comptes rendus médicaux (dictée numérique)\n- Facturation, télétransmission et gestion des feuilles de soins (Carte Vitale)\n- Respect strict du secret médical et grande discrétion", profile: "Point d'entrée de la structure médicale, j'assure l'accueil des patients et le fonctionnement administratif avec rigueur et tact. Habitué(e) à gérer les priorités, je facilite le quotidien de l'équipe médicale par une organisation sans faille.", exp: "2021 - Présent : Secrétaire Médical(e)\n- Prise de rendez-vous et optimisation des agendas des praticiens\n- Création, mise à jour et archivage minutieux des dossiers patients\n- Orientation des patients lors de leur parcours de soins dans l'établissement\n- Rédaction de courriers médicaux et suivi des correspondances avec les confrères" },
+            "ash": { title: "Agent de Service Hospitalier (ASH)", skills: "- Bio-nettoyage des chambres, blocs opératoires et parties communes\n- Maîtrise parfaite des protocoles d'hygiène et de désinfection\n- Participation au service hôtelier (distribution des petits-déjeuners/repas)\n- Rigueur extrême et discrétion professionnelle\n- Tri et évacuation sécurisée des déchets (DASRI)", profile: "Conscient(e) que l'hygiène est primordiale en milieu médical, j'exécute mes tâches avec une rigueur absolue pour lutter contre les infections. Je suis un maillon essentiel au confort des patients et au travail des soignants.", exp: "2019 - 2023 : Agent de Service Hospitalier (Clinique)\n- Nettoyage minutieux et désinfection des chambres après la sortie des patients\n- Évacuation des déchets hospitaliers selon les normes de sécurité\n- Service des repas en chambre dans le respect des régimes alimentaires\n- Entretien des parties communes et désinfection des chariots de soin" },
+            "brancardier": { title: "Brancardier(ère)", skills: "- Transport sécurisé des patients intra-hospitalier (lit, brancard, fauteuil)\n- Maîtrise parfaite des gestes et postures de manutention\n- Connaissance de la topographie de l'établissement de santé\n- Aisance relationnelle, écoute et capacité à rassurer le patient\n- Réactivité et gestion des priorités liées aux urgences", profile: "Maillon indispensable de la logistique hospitalière, j'assure le transport des patients dans le strict respect de leur confort et de leur sécurité. Dynamique et doté(e) d'une bonne condition physique, je m'adapte rapidement au rythme de l'établissement.", exp: "2022 - Présent : Brancardier(ère)\n- Acheminement des patients entre les services, les blocs opératoires et l'imagerie\n- Vérification de l'identité du patient avant chaque transfert\n- Entretien, nettoyage et désinfection quotidienne du matériel de transport\n- Signalement immédiat de tout changement de l'état de santé pendant le trajet" },
+            "auxiliaire_vie": { title: "Auxiliaire de Vie Sociale (AVS)", skills: "- Aide au lever, au coucher, à la toilette et à l'habillage\n- Entretien du cadre de vie et préparation de repas équilibrés\n- Accompagnement physique aux courses et rendez-vous médicaux\n- Stimulation cognitive, écoute active et soutien psychologique\n- Autonomie et adaptabilité", profile: "J'accompagne les personnes en perte d'autonomie pour leur permettre de vivre dignement à leur domicile. Fiable et ponctuel(le), je tisse une véritable relation de confiance tout en favorisant leur maintien social.", exp: "2018 - 2023 : Auxiliaire de vie à domicile\n- Accompagnement respectueux des personnes âgées ou en situation de handicap\n- Aide pratique pour la toilette, l'entretien du linge et les courses\n- Temps d'échange, de lecture et de jeux pour stimuler l'autonomie\n- Lien et coordination avec la famille et les professionnels de santé" },
+            "ambulancier": { title: "Ambulancier(ère)", skills: "- Conduite sécurisée et rapide de véhicules sanitaires (Ambulance, VSL)\n- Aide à la manutention et à l'installation des patients\n- Maîtrise des gestes de premiers secours et surveillance de l'état clinique\n- Entretien quotidien et désinfection du véhicule et du matériel\n- Calme, réactivité et gestion du stress en situation d'urgence", profile: "Professionnel(le) engagé(e), j'assure la prise en charge et le transport des patients dans les meilleures conditions de confort et de sécurité. Je sais faire preuve de sang-froid et d'écoute pour rassurer les personnes fragilisées.", exp: "2021 - Présent : Ambulancier(ère)\n- Transport de patients vers les centres de soins ou urgences hospitalières\n- Transmission des informations cliniques aux équipes médicales d'accueil\n- Assistance au brancardage et sécurisation des patients dans le véhicule\n- Rédaction des documents administratifs et facturation des transports" },
+            "agent_administratif": { title: "Agent(e) Administratif(ve)", skills: "- Maîtrise des outils bureautiques (Word, Excel, messagerie)\n- Saisie rapide et mise en forme de documents\n- Accueil physique et téléphonique du public\n- Classement, archivage et gestion du courrier\n- Rigueur, discrétion et sens de l'organisation", profile: "Méthodique et doté(e) d'un grand sens de l'organisation, j'assure le suivi administratif avec rigueur et efficacité. Je m'adapte rapidement aux nouveaux logiciels et j'apprécie le travail en équipe pour faciliter le bon fonctionnement du service.", exp: "2021 - 2023 : Agent(e) Administratif(ve)\n- Saisie informatique et mise à jour des bases de données\n- Réception, tri et distribution du courrier\n- Accueil physique et téléphonique des usagers\n- Préparation des dossiers et archivage des documents" },
+            "secretaire": { title: "Secrétaire / Assistant(e)", skills: "- Tenue de l'agenda et organisation de réunions\n- Rédaction professionnelle de courriers et comptes-rendus\n- Filtrage des appels et orientation des interlocuteurs\n- Excellente expression orale et écrite\n- Sens de la confidentialité", profile: "Polyvalent(e) et doté(e) d'un excellent relationnel, je suis le point de contact privilégié pour fluidifier les échanges au sein d'une équipe. J'ai à cœur de garantir un accueil chaleureux et un suivi irréprochable des dossiers.", exp: "2020 - Présent : Secrétaire\n- Accueil des visiteurs et gestion du standard téléphonique\n- Gestion des plannings, déplacements et prises de rendez-vous\n- Commandes de fournitures et gestion des stocks\n- Rédaction des comptes-rendus de réunions" },
+            "assistant_direction": { title: "Assistant(e) de Direction", skills: "- Gestion d'agendas complexes et coordination d'événements\n- Préparation de réunions (ordre du jour, présentations, synthèses)\n- Tri des e-mails, gestion des priorités et anticipation des besoins\n- Anglais professionnel (écrit et oral)\n- Discrétion absolue et diplomatie", profile: "Bras droit de la direction, j'optimise le temps et facilite la prise de décision des dirigeants grâce à une organisation sans faille. Réactif(ve) et autonome, je sais traiter les informations sensibles en toute confidentialité.", exp: "2019 - Présent : Assistant(e) de Direction\n- Organisation complète des déplacements professionnels et logistique\n- Filtrage des appels stratégiques et accueil des partenaires importants\n- Rédaction des procès-verbaux de comités de direction\n- Centralisation des informations et suivi des tableaux de bord" },
+            "assistant_rh": { title: "Assistant(e) Ressources Humaines", skills: "- Suivi administratif du personnel (contrats, avenants, absences)\n- Préparation et collecte des variables de paie\n- Gestion des offres d'emploi, tri des CV et pré-qualifications téléphoniques\n- Organisation des visites médicales et suivi des formations\n- Aisance relationnelle et discrétion professionnelle", profile: "Premier point de contact pour les collaborateurs, j'assure la gestion administrative du cycle de vie des employés avec rigueur et empathie. Je participe activement à la fluidité des processus RH de l'entreprise.", exp: "2020 - Présent : Assistant(e) RH\n- Rédaction des contrats de travail et déclaration préalable à l'embauche (DPAE)\n- Mise à jour quotidienne du logiciel de gestion des temps et des absences\n- Intégration des nouveaux collaborateurs (Onboarding)\n- Renseignement des salariés sur les questions relatives aux congés et à la paie" },
+            "comptable": { title: "Aide-comptable", skills: "- Saisie rigoureuse des écritures comptables\n- Rapprochement bancaire et lettrage des comptes\n- Utilisation de logiciels spécialisés (Sage, EBP, Ciel)\n- Préparation des éléments variables de paie\n- Respect strict des échéances", profile: "Rigoureux(se) et à l'aise avec les chiffres, j'accompagne le service comptabilité dans ses opérations quotidiennes. Je suis reconnu(e) pour ma fiabilité, ma discrétion et ma capacité à repérer rapidement les anomalies.", exp: "2021 - 2023 : Aide-comptable\n- Saisie des factures d'achats, de ventes et des frais généraux\n- Suivi de la trésorerie et pointage des relevés bancaires\n- Relance téléphonique et écrite des factures impayées\n- Aide à la préparation des déclarations de TVA" },
+            "teleconseiller": { title: "Téléconseiller(ère)", skills: "- Techniques d'écoute active et de reformulation\n- Maîtrise des logiciels de gestion de la relation client (CRM)\n- Résolution de problèmes et gestion des réclamations\n- Capacité à garder son calme en toutes circonstances\n- Élocution claire et souriante", profile: "Doté(e) d'un fort sens du service, j'aime accompagner les clients par téléphone pour répondre à leurs besoins ou résoudre leurs difficultés. Dynamique, je sais allier respect des procédures et empathie.", exp: "2022 - Présent : Téléconseiller(ère)\n- Traitement des appels entrants et sortants (information, assistance)\n- Saisie des requêtes clients dans la base de données informatique\n- Orientation des clients vers les services compétents\n- Fidélisation de la clientèle et proposition d'offres adaptées" },
+            "accueil": { title: "Agent(e) d'Accueil", skills: "- Accueil chaleureux, physique et téléphonique\n- Sens aigu du service et orientation du public\n- Gestion des flux, des attentes et des conflits de premier niveau\n- Maîtrise des outils informatiques de base\n- Présentation soignée et aisance relationnelle", profile: "Premier point de contact de l'établissement, j'ai à cœur de représenter positivement l'entreprise. Souriant(e) et réactif(ve), je sais m'adapter à tous les profils pour orienter et informer le public de manière efficace.", exp: "2021 - 2023 : Agent(e) d'accueil\n- Renseignement, orientation et accompagnement des visiteurs\n- Remise de badges et contrôle rigoureux des accès\n- Gestion du standard téléphonique et transfert des appels\n- Accompagnement des usagers dans leurs démarches de premier niveau" },
+            "vendeur": { title: "Vendeur(se) / Conseiller(ère) de vente", skills: "- Découverte des besoins clients et conseil personnalisé\n- Tenue de la caisse et fiabilité des encaissements\n- Mise en valeur des produits (Merchandising)\n- Dynamisme, force de proposition et esprit d'équipe\n- Gestion des litiges et service après-vente (SAV)", profile: "Passionné(e) par le commerce, j'aime créer une relation de confiance avec la clientèle. Engagé(e) et enthousiaste, je participe activement à la tenue du magasin et à l'atteinte des objectifs de l'équipe.", exp: "2020 - Présent : Vendeur(se)\n- Accueil proactif et accompagnement des clients en surface de vente\n- Encaissement sécurisé et ouverture de cartes de fidélité\n- Réassort régulier des rayons et respect de l'identité visuelle du magasin\n- Réception, contrôle des livraisons et étiquetage des articles" },
+            "hote_caisse": { title: "Hôte(sse) de Caisse", skills: "- Fiabilité et rapidité dans les procédures d'encaissement\n- Connaissance des différents moyens de paiement\n- Vigilance (démarques, erreurs de prix, validité des billets)\n- Accueil souriant même en période de forte affluence\n- Promotion des programmes de fidélité", profile: "Garant(e) de la dernière impression du client avant sa sortie, j'assure un passage en caisse fluide et agréable. Concentré(e) et résistant(e) au stress, je travaille avec rigueur tout en gardant mon sens du commerce.", exp: "2019 - 2023 : Hôte(sse) de caisse\n- Enregistrement des articles et encaissement des clients\n- Contrôle de la conformité des paiements (chèques, espèces, cartes)\n- Information de la clientèle sur les offres promotionnelles en cours\n- Comptage méticuleux et clôture de la caisse en fin de service" },
+            "employe_rayon": { title: "Employé(e) Libre-Service", skills: "- Mise en rayon (facing) et rotation rigoureuse des dates de péremption\n- Utilisation de transpalettes manuels et électriques\n- Respect strict de la chaîne du froid et des normes d'hygiène\n- Résistance physique et travail matinal\n- Esprit d'équipe et réactivité", profile: "Acteur(trice) clé de l'attractivité du magasin, je veille à ce que les rayons soient toujours pleins, propres et ordonnés. Polyvalent(e) et énergique, je sais travailler de manière autonome pour garantir la satisfaction client.", exp: "2021 - Présent : Employé(e) de rayon\n- Approvisionnement des linéaires en épicerie ou produits frais\n- Retrait immédiat des produits périmés ou endommagés (démarque)\n- Maintien de la propreté et du rangement dans les allées et les réserves\n- Renseignement et orientation bienveillante des clients dans le magasin" },
+            "boulanger": { title: "Boulanger(ère)", skills: "- Maîtrise des techniques de pétrissage, façonnage et fermentation\n- Contrôle précis des temps et des températures de cuisson\n- Application stricte des normes d'hygiène et de sécurité (HACCP)\n- Gestion des stocks de farines et matières premières\n- Endurance physique et capacité à travailler de nuit", profile: "Artisan dans l'âme, je suis passionné(e) par le travail de la pâte et la fabrication de produits de qualité. Rigoureux(se) dans mes recettes et mon organisation, j'assure une production régulière pour satisfaire la clientèle dès l'ouverture.", exp: "2018 - 2023 : Boulanger(ère)\n- Préparation minutieuse des pâtes, viennoiseries et pains spéciaux\n- Programmation, enfournement et surveillance attentive des cuissons\n- Nettoyage et désinfection quotidiens du matériel et du laboratoire\n- Suivi des commandes de matières premières auprès des fournisseurs" },
+            "patissier": { title: "Pâtissier(ère)", skills: "- Fabrication de pâtes, crèmes, entremets et petits fours\n- Montage, glaçage et décoration soignée des pâtisseries\n- Rigueur dans le pesage des ingrédients et le respect des recettes\n- Sens aigu de l'esthétique et de la créativité\n- Respect strict des normes d'hygiène alimentaire (HACCP)", profile: "Minutieux(se) et créatif(ve), j'aime allier goût et esthétique pour régaler la clientèle. Habitué(e) au travail matinal, je fais preuve d'une grande rigueur dans l'exécution de mes recettes pour garantir une qualité constante.", exp: "2019 - Présent : Pâtissier(ère)\n- Confection quotidienne de la vitrine de pâtisseries traditionnelles et modernes\n- Élaboration de gâteaux sur-mesure pour des événements (mariages, anniversaires)\n- Gestion des cuissons, du tempérage du chocolat et du travail du sucre\n- Nettoyage approfondi du laboratoire et des ustensiles en fin de production" },
+            "boucher": { title: "Boucher(ère) / Charcutier(ère)", skills: "- Désossage, parage, découpe et préparation des viandes\n- Réalisation de préparations bouchères crues et charcuteries\n- Conseils culinaires et fidélisation de la clientèle\n- Manipulation sécurisée d'outils tranchants (couteaux, scies)\n- Application stricte des règles sanitaires et de la chaîne du froid", profile: "Artisan passionné par les bons produits, j'assure la préparation et la valorisation des viandes avec précision. J'apprécie le contact client et je sais conseiller sur les morceaux et les temps de cuisson pour garantir leur satisfaction.", exp: "2020 - Présent : Boucher(ère)\n- Découpe des carcasses et préparation des différents morceaux pour la vitrine\n- Confection de marinades, paupiettes et rôtis prêts à cuire\n- Accueil chaleureux, service au comptoir et encaissement des clients\n- Contrôle quotidien des températures des chambres froides et des vitrines" },
+            "fleuriste": { title: "Fleuriste", skills: "- Réalisation de bouquets, compositions florales et couronnes\n- Entretien quotidien des fleurs coupées et des plantes en pot\n- Sens de l'harmonie des couleurs et créativité\n- Accueil, conseil client et vente additionnelle\n- Résistance au travail debout et dans un environnement humide/frais", profile: "Doté(e) d'une fibre artistique et d'un excellent relationnel, je crée des compositions florales adaptées à toutes les occasions. Je prends soin des végétaux avec passion pour offrir des créations durables et esthétiques.", exp: "2021 - Présent : Fleuriste\n- Création de bouquets ronds et compositions sur mesure pour les clients\n- Nettoyage des tiges, changement des eaux et entretien des vitrines\n- Conseil personnalisé pour l'entretien des plantes d'intérieur et d'extérieur\n- Préparation des commandes pour des événements spéciaux (mariages, deuils)" },
+            "agent_immobilier": { title: "Agent(e) Immobilier / Négociateur", skills: "- Prospection sur le terrain et pige téléphonique\n- Estimation de biens immobiliers (maisons, appartements, locaux)\n- Rédaction et diffusion d'annonces attractives\n- Organisation des visites et mise en valeur des biens\n- Négociation commerciale et accompagnement jusqu'à la signature", profile: "Commercial(e) pugnace et à l'écoute, j'accompagne mes clients dans leur projet de vie, de l'estimation de leur bien jusqu'à la signature chez le notaire. J'ai une excellente connaissance de mon secteur géographique.", exp: "2019 - Présent : Négociateur(trice) Immobilier\n- Recherche active de nouveaux mandats de vente (prospection physique et réseau)\n- Réalisation d'avis de valeur précis basés sur l'analyse du marché local\n- Accompagnement des acquéreurs lors des visites et sélection des profils financiers\n- Médiation entre vendeurs et acheteurs pour aboutir à une offre d'achat acceptée" },
+            "coiffeur": { title: "Coiffeur(se)", skills: "- Réalisation de coupes, couleurs, mèches et brushings\n- Réalisation de diagnostics capillaires pertinents\n- Conseil personnalisé selon la morphologie (visagisme)\n- Vente de soins et produits capillaires adaptés\n- Sens aigu de l'esthétique et de l'écoute", profile: "Créatif(ve) et à l'écoute, j'accompagne mes clients pour sublimer leur image tout en respectant la nature de leurs cheveux. Je maintiens un espace de travail impeccable et je me tiens informé(e) des nouvelles tendances.", exp: "2019 - Présent : Coiffeur(se)\n- Accueil du client, échange sur ses attentes et diagnostic du cheveu\n- Application de techniques de coloration, balayage et soins spécifiques\n- Tenue de l'agenda, prise de rendez-vous et encaissement\n- Entretien, nettoyage et stérilisation du matériel de coiffure" },
+            "estheticienne": { title: "Esthéticien(ne) / Conseiller(ère) Beauté", skills: "- Réalisation de soins du visage et du corps adaptés au type de peau\n- Épilations, manucures et maquillages professionnels\n- Diagnostic beauté et conseil personnalisé en produits cosmétiques\n- Sens de l'accueil, douceur et discrétion\n- Maintien d'une hygiène irréprochable de la cabine de soin", profile: "Passionné(e) par le bien-être et la beauté, j'offre à ma clientèle un moment de détente et des soins de qualité. Doux(ce) et à l'écoute, je sais fidéliser mes clients en leur apportant des conseils experts sur-mesure.", exp: "2021 - Présent : Esthéticien(ne)\n- Accueil de la clientèle et préparation de la cabine avant chaque prestation\n- Exécution minutieuse de soins esthétiques (modelages, épilations, beauté des ongles)\n- Vente additionnelle de produits de soin en assurant les objectifs commerciaux\n- Stérilisation du petit matériel et gestion des stocks de produits cabine" },
+            "garde_enfants": { title: "Garde d'enfants / Assistant(e) Maternel(le)", skills: "- Soins d'hygiène, changes et préparation des repas adaptés à l'âge\n- Mise en place d'activités d'éveil, de motricité et de jeux ludiques\n- Vigilance constante concernant la sécurité affective et physique\n- Accompagnement dans les apprentissages (aide aux devoirs)\n- Douceur, patience et autorité bienveillante", profile: "Responsable et créatif(ve), je participe activement au développement et à l'épanouissement des enfants qui me sont confiés. J'instaure un cadre sécurisant et je communique en toute transparence avec les parents.", exp: "2021 - Présent : Garde d'enfants à domicile\n- Prise en charge des enfants à la sortie de l'école ou de la crèche\n- Accompagnement aux activités extrascolaires en toute sécurité\n- Aide méthodique aux devoirs et organisation de jeux créatifs\n- Préparation des repas et supervision du rituel du coucher" },
+            "atsem": { title: "Agent(e) ATSEM (École maternelle)", skills: "- Assistance de l'enseignant(e) dans les activités pédagogiques\n- Accueil matinal, aide à l'habillage et passage aux toilettes des enfants\n- Préparation du matériel pour les ateliers (peinture, découpage)\n- Entretien et désinfection quotidiens des locaux et du matériel\n- Surveillance bienveillante lors des temps de cantine et de sieste", profile: "Doux(ce) et patient(e), j'accompagne les jeunes enfants dans leurs premiers apprentissages et leur quête d'autonomie. Je suis un véritable relais pour l'enseignant(e) et je veille en permanence à l'hygiène et à la sécurité de la classe.", exp: "2020 - Présent : ATSEM en école maternelle\n- Installation du matériel pédagogique et aide matérielle pendant les ateliers\n- Accompagnement individualisé des enfants lors des repas pour favoriser l'autonomie\n- Surveillance du temps de sieste et réveil échelonné des petites sections\n- Nettoyage complet des tables, sols et sanitaires en fin de journée" },
+            "auxiliaire_puericulture": { title: "Auxiliaire de Puériculture", skills: "- Réalisation des soins d'hygiène, d'alimentation et de confort du jeune enfant\n- Observation de l'état général et du développement psychomoteur\n- Animation de jeux d'éveil adaptés à l'âge (crèche ou halte-garderie)\n- Soutien à la parentalité et écoute bienveillante\n- Transmission des informations à l'équipe pluridisciplinaire (EJE, infirmière)", profile: "Dévoué(e) au bien-être des tout-petits, j'accompagne leur développement dans un cadre sécurisant et stimulant. Rigoureux(se) sur les protocoles, j'aime le travail en équipe et créer un lien de confiance avec les familles.", exp: "2019 - Présent : Auxiliaire de Puériculture (Crèche)\n- Accueil chaleureux des enfants et recueil des transmissions des parents le matin\n- Préparation et distribution des biberons et repas dans le respect des régimes\n- Animation de temps calmes, lectures et parcours de motricité\n- Changes réguliers et accompagnement bienveillant vers l'acquisition de la propreté" },
+            "animateur": { title: "Animateur(trice) Périscolaire", skills: "- Conception et encadrement d'activités manuelles, sportives et culturelles\n- Gestion de la dynamique de groupe et médiation lors de conflits\n- Veille à la sécurité physique et morale des mineurs\n- Pédagogie, dynamisme et très forte capacité d'adaptation\n- Titulaire du BAFA (ou équivalent)", profile: "Débordant(e) d'énergie et d'imagination, je conçois des projets d'animation qui favorisent le vivre-ensemble et l'apprentissage par le jeu. Je sais instaurer des règles de vie de groupe dans le respect et la bonne humeur.", exp: "2022 - Présent : Animateur(trice) en Centre de loisirs\n- Création et animation de grands jeux et d'ateliers créatifs\n- Encadrement bienveillant des enfants lors des repas à la cantine\n- Accompagnement lors des sorties pédagogiques en extérieur\n- Préparation de spectacles de fin d'année avec les groupes d'enfants" },
+            "serveur": { title: "Serveur(se) en Restauration", skills: "- Prise de commandes précise (carnet ou terminal numérique)\n- Service efficace au plateau et techniques de port d'assiettes\n- Connaissance de la carte pour conseiller les clients (mets et vins)\n- Gestion du stress, endurance physique et rapidité d'exécution\n- Encaissement et rendu de monnaie sans erreur", profile: "Souriant(e) et doté(e) d'une excellente mémoire, j'assure un service fluide pour garantir un moment agréable à la clientèle. Habitué(e) au rythme intense des coups de feu, je travaille en parfaite synchronisation avec la cuisine.", exp: "2021 - Présent : Serveur(se)\n- Dressage des tables et mise en place rigoureuse de la salle avant le service\n- Accueil chaleureux de la clientèle, remise des cartes et conseil\n- Service continu et coordination des envois avec la cuisine\n- Débarrassage rapide, nettoyage des tables et encaissement des additions" },
+            "barman": { title: "Barman / Barmaid", skills: "- Confection de cocktails classiques et création de recettes originales\n- Service rapide de boissons chaudes, bières pression et spiritueux\n- Entretien de l'espace bar et nettoyage constant du matériel\n- Gestion des stocks de boissons, sirops, fruits et verrerie\n- Excellent relationnel, discrétion et animation du comptoir", profile: "Dynamique et créatif(ve), j'anime le bar avec le sourire tout en assurant un service rapide et de qualité. Rigoureux(se) sur l'hygiène et les dosages, je sais créer une atmosphère conviviale pour fidéliser la clientèle.", exp: "2020 - Présent : Barman / Barmaid\n- Préparation des commandes de boissons pour la salle et les clients au comptoir\n- Création de la carte des cocktails saisonniers et gestion des sirops maison\n- Rangement des livraisons, rotation des fûts et inventaires hebdomadaires\n- Clôture de la caisse et nettoyage complet de la station de travail en fin de service" },
+            "cuisinier": { title: "Cuisinier(ère) / Commis de Cuisine", skills: "- Préparation préliminaire (épluchage, taillage des légumes en julienne/brunoise)\n- Réalisation des cuissons, fonds de sauce et préparations chaudes/froides\n- Dressage soigné et esthétique des assiettes\n- Respect intransigeant des normes d'hygiène (HACCP)\n- Gestion des stocks, inventaires et limitation du gaspillage", profile: "Passionné(e) par la gastronomie et le travail des produits frais, je suis organisé(e) et méthodique. Capable de garder mon sang-froid pendant le service, j'apprécie le travail en brigade et la communication claire.", exp: "2020 - 2023 : Commis de cuisine\n- Réalisation des préparations de base, entrées froides et desserts\n- Cuisson précise des viandes et accompagnements pendant le service\n- Nettoyage approfondi des plans de travail, pianos et chambres froides\n- Réception, contrôle et rangement qualitatif des livraisons fournisseurs" },
+            "plongeur": { title: "Employé(e) de Plonge", skills: "- Nettoyage efficace de la batterie de cuisine (casseroles, plaques)\n- Utilisation et entretien des machines à laver industrielles (lave-vaisselle, tunnel)\n- Rangement rapide et organisé de la vaisselle propre\n- Grande résistance physique (chaleur, humidité, station debout)\n- Respect strict des consignes d'hygiène", profile: "Maillon indispensable au bon fonctionnement d'un restaurant, j'assure l'approvisionnement constant de la cuisine et de la salle en matériel propre. Dynamique et résistant(e), je travaille avec rapidité et méthode.", exp: "2021 - 2022 : Plongeur(se) - Restaurant\n- Tri, prélavage et lavage continu de la vaisselle pendant le service\n- Séchage et rangement de la vaisselle propre pour la salle et la cuisine\n- Entretien quotidien de la zone de plonge et nettoyage des sols de la cuisine\n- Sortie des poubelles et nettoyage des conteneurs à déchets" },
+            "receptionniste": { title: "Réceptionniste (Hôtellerie)", skills: "- Accueil multilingue (Check-in / Check-out)\n- Utilisation de logiciels de réservation hôtelière (PMS comme Opera, Mews)\n- Facturation, encaissement et gestion de la caisse\n- Réponse aux demandes clients (conciergerie, plaintes, informations)\n- Présentation irréprochable et grand sens de l'hospitalité", profile: "Véritable ambassadeur(rice) de l'établissement, j'assure un accueil chaleureux et personnalisé à chaque client. Polyvalent(e) et organisé(e), je gère les imprévus avec calme pour garantir un séjour parfait.", exp: "2020 - Présent : Réceptionniste d'hôtel\n- Traitement des réservations par téléphone, e-mail et plateformes en ligne (OTA)\n- Accueil physique des clients, remise des clés et présentation des services\n- Facturation des nuitées et des extras (minibar, petit-déjeuner) au départ\n- Transmission des requêtes clients aux services des étages ou de la maintenance" },
+            "femme_chambre": { title: "Valet / Femme de Chambre", skills: "- Réfection impeccable des lits (technique au carré)\n- Nettoyage complet et détartrage des sanitaires et salles de bain\n- Réassort du linge de toilette et des produits d'accueil\n- Souci extrême du détail et perfectionnisme\n- Discrétion absolue et respect de l'intimité des clients", profile: "Conscient(e) que la propreté est le premier critère de qualité d'un hôtel, je veille à ce que chaque chambre soit parfaite. Discret(ère) et organisé(e), je respecte les cadences tout en maintenant un standard de qualité élevé.", exp: "2019 - Présent : Femme / Valet de chambre (Hôtellerie)\n- Nettoyage quotidien et remise à blanc de 15 chambres par jour\n- Changement du linge de lit et de toilette selon les procédures de l'hôtel\n- Signalement immédiat des dysfonctionnements techniques (ampoules, fuites)\n- Préparation, réapprovisionnement et rangement du chariot d'étage" },
+            "restauration_rapide": { title: "Équipier(ère) Polyvalent(e)", skills: "- Assemblage rapide de sandwichs, salades et préparation de frites\n- Prise de commande efficace au comptoir, en borne ou au drive\n- Respect drastique des DLC (Dates Limites de Consommation) et de l'hygiène\n- Travail en équipe, réactivité et gestion des fortes affluences\n- Entretien régulier de la salle, du comptoir et des sanitaires", profile: "Doté(e) d'une belle énergie, j'aime le travail en équipe dans des environnements très dynamiques. Polyvalent(e), je garantis un service rapide et souriant tout en respectant scrupuleusement les standards de qualité de l'enseigne.", exp: "2022 - Présent : Équipier(ère) de restauration rapide\n- Accueil chaleureux, prise de commande et encaissement des clients\n- Cuisson des viandes/frites et assemblage rapide des repas commandés\n- Nettoyage des tables, vidage des poubelles et entretien de la salle\n- Gestion efficace des commandes au Drive en période de rush" },
+            "preparateur": { title: "Préparateur(trice) de Commandes", skills: "- Utilisation de systèmes informatiques embarqués (scanchettes, commande vocale)\n- Constitution de palettes stables (montage, filmage manuel ou automatique)\n- Port de charges avec respect des gestes et postures de sécurité\n- Rigueur absolue (aucun oubli ni erreur de référence dans les colis)\n- Capacité à maintenir une cadence de productivité soutenue", profile: "Rigoureux(se) et doté(e) d'une excellente condition physique, je prépare les commandes avec précision pour garantir la satisfaction du client final à la livraison. Je suis organisé(e) et très respectueux(se) des consignes de l'entrepôt.", exp: "2021 - Présent : Préparateur(trice) de commandes (Logistique)\n- Prélèvement (picking) des articles dans les allées selon le bon de préparation\n- Emballage soigné, étiquetage et sécurisation des colis sur palette\n- Contrôle qualitatif et quantitatif de la conformité des expéditions\n- Signalement des ruptures de stock ou des anomalies d'adressage" },
+            "cariste": { title: "Cariste (CACES)", skills: "- Conduite sécurisée de chariots élévateurs (CACES 1, 3 et/ou 5 en cours de validité)\n- Gerbage et dégerbage de palettes en grande hauteur\n- Chargement et déchargement optimisés de camions ou containers\n- Sens aigu de la sécurité des biens et des personnes dans l'entrepôt\n- Saisie informatique des mouvements de stocks sur terminal", profile: "Précis(e) et prudent(e), je maîtrise la conduite d'engins de manutention pour optimiser l'espace de stockage. Je manipule les marchandises avec soin et je veille scrupuleusement à la sécurité de mes collègues piétons.", exp: "2018 - 2023 : Cariste\n- Déchargement sécurisé des camions de livraison et contrôle de la marchandise\n- Rangement et stockage des palettes en palettier (rack) jusqu'à 8 mètres\n- Approvisionnement continu des zones de préparation de commandes\n- Vérification quotidienne de l'état du chariot (check-list, niveau de batterie)" },
+            "chauffeur": { title: "Chauffeur-Livreur (VL/PL)", skills: "- Conduite prudente de Véhicules Légers (Permis B) ou Poids Lourds\n- Optimisation des plans de tournées et utilisation de GPS/applications métiers\n- Bon relationnel client et représentation positive de l'entreprise\n- Respect rigoureux du code de la route et des délais de livraison\n- Entretien de base et propreté du véhicule confié", profile: "Ponctuel(le) et très autonome, j'ai le sens de l'orientation et des responsabilités. Je sais organiser mes tournées pour respecter les impératifs horaires malgré les aléas de la circulation, tout en gardant le sourire chez le client.", exp: "2020 - Présent : Chauffeur-Livreur\n- Chargement logique du véhicule en fonction de l'ordre de la tournée\n- Livraison sécurisée de 60 à 80 points par jour (BtoB et BtoC)\n- Recueil des signatures électroniques et gestion des bons de livraison\n- Signalement immédiat des anomalies de livraison ou des avaries colis" },
+            "conducteur_bus": { title: "Conducteur(trice) de Bus/Car", skills: "- Conduite souple et sécurisée de véhicules de transport en commun (Permis D + FIMO)\n- Vente de titres de transport et gestion rigoureuse de la caisse\n- Respect absolu des horaires, des itinéraires et du code de la route\n- Sens du service client, courtoisie et gestion des conflits à bord\n- Connaissances de base en mécanique pour identifier les pannes", profile: "Responsable et ponctuel(le), j'assure le transport des voyageurs dans des conditions optimales de confort et de sécurité. Je sais garder mon calme dans la circulation et j'offre un accueil agréable à chaque usager.", exp: "2019 - Présent : Conducteur(trice) de ligne urbaine\n- Réalisation des tournées selon le planning et l'itinéraire préétablis\n- Accueil, renseignement des voyageurs et encaissement des tickets\n- Vérification quotidienne de l'état du véhicule avant la prise de service\n- Signalement des anomalies techniques et rédaction des rapports d'incident" },
+            "magasinier": { title: "Magasinier(ère) / Gestionnaire de stocks", skills: "- Réception physique, contrôle qualitatif et informatique des marchandises\n- Gestion précise des stocks et réalisation d'inventaires (tournants ou annuels)\n- Utilisation de logiciels ERP (Enterprise Resource Planning)\n- Rangement logique et optimisation des emplacements de produits\n- Esprit d'analyse, d'organisation et grande fiabilité", profile: "À l'aise avec les chiffres et l'outil informatique, je suis le garant de la justesse des stocks de l'entreprise. Je facilite le travail de mes collègues de la production ou de la vente en maintenant un magasin parfaitement ordonné.", exp: "2019 - 2022 : Magasinier(ère)\n- Réception des pièces fournisseurs et signalement des non-conformités\n- Saisie informatique des entrées et sorties de matériel sur logiciel\n- Préparation du matériel pour les équipes techniques ou les expéditions\n- Réalisation de comptages réguliers pour assurer la fiabilité du stock" },
+            "manutentionnaire": { title: "Manutentionnaire", skills: "- Tri, port manuel, déplacement et rangement de marchandises diverses\n- Filmage manuel solide de palettes pour le transport\n- Grande endurance physique pour le port de charges répétitif\n- Respect rigoureux des règles de sécurité, gestes et postures\n- Fort esprit d'équipe et d'entraide", profile: "Volontaire, robuste et travailleur(se), je suis l'aide indispensable pour assurer la fluidité des opérations dans l'entrepôt ou sur le quai. J'aime le travail physique en équipe et je veille à garder ma zone de travail propre et dégagée.", exp: "2022 - Présent : Manutentionnaire\n- Déchargement manuel de containers de marchandises en équipe\n- Tri rapide et répartition des colis sur tapis roulant selon les destinations\n- Filmage, houssage et cerclage des palettes avant expédition\n- Balayage et nettoyage quotidien des quais de chargement" },
+            "agent_entretien": { title: "Agent(e) d'Entretien / de Propreté", skills: "- Maîtrise des techniques de nettoyage professionnel (lavage, décapage, lustrage)\n- Utilisation sécurisée du matériel mécanisé (mono-brosse, auto-laveuse)\n- Connaissance et dosage précis des produits d'entretien chimiques\n- Autonomie, efficacité et respect des plannings d'intervention\n- Discrétion lors d'interventions en présence du public ou du personnel", profile: "Sérieux(se) et minutieux(se), j'ai à cœur de maintenir des locaux propres, sains et accueillants. Je travaille de manière autonome tout en respectant scrupuleusement les protocoles d'hygiène, de sécurité et d'environnement.", exp: "2020 - Présent : Agent(e) de propreté\n- Nettoyage complet de bureaux, salles de réunion et espaces communs\n- Aspiration, lavage des sols, dépoussiérage du mobilier et désinfection\n- Nettoyage des sanitaires et remplacement des consommables (savon, papier)\n- Tri des déchets et vidage régulier des corbeilles" },
+            "ouvrier_batiment": { title: "Ouvrier(ère) du Bâtiment (Manœuvre)", skills: "- Préparation des matériaux de base (fabrication de mortier, béton)\n- Aide au montage et démontage d'échafaudages sécurisés\n- Nettoyage, rangement et sécurisation de la zone de chantier\n- Utilisation d'outillage manuel (pelle, pioche) et électroportatif de base\n- Endurance physique, ponctualité et esprit de camaraderie", profile: "Travailleur(se) engagé(e) et respectueux(se) des consignes de sécurité, j'assiste efficacement les ouvriers qualifiés (maçons, charpentiers) pour faire avancer le chantier. Je n'ai pas peur de l'effort physique en extérieur.", exp: "2021 - 2023 : Manœuvre BTP\n- Démolition manuelle soignée et évacuation des gravats en benne\n- Approvisionnement des artisans en briques, parpaings et matériaux divers\n- Maintien quotidien de la propreté et du balisage du chantier\n- Assistance au coulage de dalles et préparation du matériel" },
+            "peintre": { title: "Peintre en Bâtiment", skills: "- Préparation rigoureuse des supports (lessivage, enduisage, ponçage, impression)\n- Application maîtrisée de peintures et vernis (au rouleau, brosse ou pistolet)\n- Pose soignée de revêtements muraux (papier peint, toile de verre)\n- Précision, minutie et soin apporté aux finitions (réchampissage)\n- Protection méticuleuse du chantier et du mobilier", profile: "Minutieux(se) et doté(e) du sens du détail, j'aime le travail bien fait. Je protège systématiquement mes chantiers pour livrer des finitions impeccables aux clients, tout en respectant les délais annoncés.", exp: "2018 - Présent : Peintre en bâtiment\n- Préparation approfondie des murs et plafonds (rebouchage, lissage complet)\n- Peinture intérieure de logements neufs ou en rénovation\n- Nettoyage des outils et restitution d'un chantier parfaitement propre\n- Pose de bâches de protection, de rubans de masquage et démontage des prises" },
+            "plombier": { title: "Plombier(ère) / Chauffagiste", skills: "- Coupe, soudure et pose de tuyauteries (cuivre, PVC, PER)\n- Installation d'équipements sanitaires (lavabos, douches, WC)\n- Installation et mise en service de systèmes de chauffage et chaudières\n- Recherche de fuites et dépannage rapide chez les particuliers\n- Lecture précise de plans et schémas techniques", profile: "Technicien(ne) rigoureux(se) et réactif(ve), je réalise des installations fiables et durables. Doté(e) d'un bon esprit d'analyse, je sais diagnostiquer rapidement les pannes pour proposer des solutions efficaces aux clients.", exp: "2019 - Présent : Plombier(ère) Installateur(trice)\n- Rénovation complète de salles de bain (pose des réseaux et des sanitaires)\n- Intervention d'urgence pour débouchage et réparation de fuites\n- Entretien annuel et remplacement de chauffe-eaux et chaudières\n- Rédaction de devis et conseil client sur les économies d'eau/énergie" },
+            "electricien": { title: "Électricien(ne) en Bâtiment", skills: "- Lecture de schémas électriques et plans d'implantation\n- Tirage de câbles, pose de chemins de câbles et de goulottes\n- Raccordement de tableaux électriques, prises et interrupteurs\n- Respect absolu des normes de sécurité (NFC 15-100)\n- Recherche de pannes (multimètre) et mise en conformité", profile: "Précis(e) et soucieux(se) de la sécurité, j'assure l'installation et la maintenance des réseaux électriques. Habilité(e) et méticuleux(se), je garantis des chantiers propres et des installations parfaitement conformes.", exp: "2020 - Présent : Électricien(ne)\n- Câblage complet de logements neufs, du tableau jusqu'aux appareillages\n- Mise en sécurité et rénovation d'installations électriques anciennes\n- Installation de systèmes domotiques, alarmes et VMC\n- Tests, mesures et essais avant la mise sous tension finale" },
+            "menuisier": { title: "Menuisier(ère) / Poseur", skills: "- Lecture de plans et prise de cotes précises sur chantier\n- Découpe, assemblage et pose de menuiseries (bois, PVC, alu)\n- Pose d'aménagements intérieurs (cuisines, placards, parquets, portes)\n- Maîtrise des machines-outils et de l'outillage portatif\n- Grand soin apporté aux finitions et à l'étanchéité", profile: "Artisan habile et précis, j'ai à cœur de fournir un travail soigné qui embellit l'habitat. Autonome sur chantier, je sais m'adapter aux contraintes du bâti pour garantir une pose parfaite et durable.", exp: "2018 - Présent : Menuisier(ère) Poseur\n- Dépose d'anciennes fenêtres et pose de nouvelles menuiseries extérieures isolantes\n- Montage et ajustement de meubles de cuisine chez les particuliers\n- Pose soignée de plinthes, parquets flottants et habillages divers\n- Réglage des fermetures, réalisation des joints et nettoyage de fin de chantier" },
+            "mecanicien": { title: "Mécanicien(ne) Automobile", skills: "- Réalisation de l'entretien courant (vidange, filtres, pneumatiques, freins)\n- Diagnostic électronique des pannes via valise de test\n- Remplacement de pièces d'usure lourdes (distribution, embrayage, amortisseurs)\n- Rigueur, méthode et respect des temps de réparation barémés\n- Maintien d'un poste de travail propre et sécurisé", profile: "Passionné(e) de mécanique et méthodique, j'assure la maintenance et la réparation des véhicules avec efficacité. Je suis soucieux(se) de la sécurité des clients et je prends le temps d'expliquer les interventions réalisées.", exp: "2020 - Présent : Mécanicien(ne) Auto\n- Réception du véhicule, écoute du client et recherche méthodique de pannes\n- Exécution des révisions périodiques selon le cahier des charges constructeur\n- Démontage, contrôle et remplacement de sous-ensembles mécaniques\n- Essai du véhicule sur route pour valider la réparation avant restitution" },
+            "carrossier": { title: "Carrossier(ère) / Peintre Auto", skills: "- Évaluation des dégâts et redressage d'éléments de carrosserie\n- Démontage, réparation (masticage, ponçage) et remontage d'éléments\n- Préparation des surfaces (marouflage, apprêt) avant mise en peinture\n- Dosage précis, colorimétrie et application de la peinture au pistolet\n- Minutie, patience et grande habileté manuelle", profile: "Perfectionniste et doté(e) d'un excellent coup d'œil, je redonne aux véhicules accidentés leur aspect d'origine. Je maîtrise toutes les étapes de la réparation, de la tôle nue jusqu'au lustrage final.", exp: "2019 - Présent : Carrossier(ère) Peintre\n- Remplacement d'éléments soudés ou amovibles (pare-chocs, portières, ailes)\n- Débosselage, planage et ponçage des zones endommagées\n- Recherche de la teinte exacte et préparation de la peinture en laboratoire\n- Application des couches de base et du vernis en cabine de peinture" },
+            "agent_securite": { title: "Agent(e) de Sécurité", skills: "- Filtrage rigoureux, contrôle d'accès et vérification des identités/sacs\n- Réalisation de rondes de prévention, de surveillance et de fermeture\n- Connaissance des gestes de premiers secours (SST) et de sécurité incendie (SSIAP)\n- Maîtrise de soi exceptionnelle, sens de l'observation et de l'anticipation\n- Gestion des conflits par le dialogue et la désescalade", profile: "Intègre, d'un naturel calme et très réactif(ve), j'assure la protection des biens et des personnes avec un grand professionnalisme. Je sais faire respecter les consignes avec fermeté mais courtoisie.", exp: "2019 - 2023 : Agent(e) de Sécurité Privée\n- Contrôle des accès aux entrées du magasin et dissuasion\n- Lutte active contre la démarque inconnue (vols) et interpellation dans le cadre légal\n- Rédaction précise des rapports d'intervention et des mains courantes\n- Rondes de fermeture, vérification des issues de secours et mise sous alarme" },
+            "jardinier": { title: "Jardinier(ère) / Paysagiste", skills: "- Entretien courant : tonte, taille de haies, élagage léger et débroussaillage\n- Plantations, engazonnement et entretien esthétique de massifs floraux\n- Utilisation sécurisée et entretien du matériel de motoculture (thermique/électrique)\n- Bonnes connaissances des végétaux, des sols et des saisons\n- Goût pour le travail en extérieur et sensibilité à l'environnement", profile: "Passionné(e) par la nature et les espaces verts, je travaille en extérieur par tous les temps avec la même motivation. Je veille à la bonne santé et à l'esthétique parfaite des jardins ou parcs qui me sont confiés.", exp: "2020 - Présent : Ouvrier(ère) Paysagiste\n- Entretien régulier de parcs d'entreprises, résidences et jardins de particuliers\n- Tonte soignée de pelouses, passage du rotofil et désherbage écologique\n- Ramassage des feuilles mortes, taille de rosiers et arbustes selon la saison\n- Nettoyage du matériel (tondeuses, tronçonneuses) en fin de journée" },
+            "developpeur_web": { title: "Développeur(se) Web", skills: "- Maîtrise des langages front-end (HTML, CSS, JavaScript)\n- Connaissance de frameworks modernes (React, Vue, ou Angular)\n- Intégration web responsive et optimisation des performances\n- Utilisation d'outils de versioning (Git, GitHub, GitLab)\n- Sens de la résolution de problèmes et esprit logique", profile: "Passionné(e) par la création numérique, je conçois et développe des interfaces web fluides et ergonomiques. J'ai à cœur de produire un code propre et maintenable, tout en restant en veille constante sur les nouvelles technologies.", exp: "2022 - Présent : Développeur(se) Web Junior\n- Développement de nouvelles fonctionnalités sur l'application client\n- Résolution de bugs et optimisation du temps de chargement des pages\n- Collaboration avec l'équipe design pour l'intégration fidèle des maquettes\n- Rédaction de documentation technique sur le code produit" },
+            "technicien_informatique": { title: "Technicien(ne) Support Informatique", skills: "- Diagnostic et résolution d'incidents matériels et logiciels (Helpdesk)\n- Installation, configuration et maintenance de postes de travail\n- Gestion des droits utilisateurs et de l'Active Directory\n- Sens du service, pédagogie et patience avec les utilisateurs\n- Traitement rigoureux des tickets via outil ITSM (GLPI, Jira)", profile: "Réactif(ve) et à l'écoute, j'accompagne les utilisateurs au quotidien pour garantir le bon fonctionnement de leur environnement de travail numérique. J'aime vulgariser l'informatique pour rendre l'assistance accessible à tous.", exp: "2020 - 2023 : Technicien(ne) Support Informatique\n- Prise d'appels et résolution des incidents informatiques de niveau 1 et 2\n- Préparation, masterisation et déploiement des nouveaux PC collaborateurs\n- Accompagnement et formation des utilisateurs aux outils bureautiques\n- Mise à jour systématique de la base de connaissances interne" },
+            "community_manager": { title: "Community Manager", skills: "- Animation de communautés sur les réseaux sociaux (Facebook, Insta, LinkedIn, TikTok)\n- Création de contenus visuels et textuels engageants (Canva, Suite Adobe)\n- Modération des commentaires et gestion de l'e-réputation\n- Programmation des publications et suivi du calendrier éditorial\n- Analyse des statistiques (KPIs) et reporting mensuel", profile: "Créatif(ve) et connecté(e), je donne une voix aux marques sur le web. Je sais fédérer une communauté grâce à des contenus pertinents et une interaction authentique, tout en gardant un œil stratégique sur les tendances.", exp: "2021 - Présent : Community Manager\n- Rédaction des posts quotidiens et création de visuels adaptés à chaque plateforme\n- Réponse aux messages privés et modération bienveillante des commentaires\n- Organisation de jeux-concours pour booster la visibilité et l'engagement\n- Veille concurrentielle et proposition de nouveaux formats (Reels, Stories)" },
+            "graphiste": { title: "Graphiste / Webdesigner", skills: "- Maîtrise experte de la Suite Adobe (Illustrator, Photoshop, InDesign)\n- Création d'identités visuelles (logos, chartes graphiques)\n- Conception de supports de communication Print (affiches, flyers, brochures)\n- Maquettage d'interfaces Web (UI/UX) via Figma ou Adobe XD\n- Forte sensibilité typographique, colorimétrique et créativité", profile: "Traducteur(rice) visuel(le), je transforme des concepts en images fortes et percutantes. Polyvalent(e) du Print au Web, je suis rigoureux(se) dans la préparation des fichiers et toujours à la recherche d'idées neuves.", exp: "2019 - Présent : Graphiste Indépendant(e) / Agence\n- Déclinaison de l'identité visuelle de clients sur divers supports de communication\n- Préparation minutieuse des fichiers pour l'impression (fonds perdus, colorimétrie CMJN)\n- Création de bannières web et visuels pour les campagnes sur les réseaux sociaux\n- Présentation et argumentation des choix graphiques auprès des clients" }
+        };
+
+        function updateCV(inputId, outputId) {
+            const inputEl = document.getElementById(inputId);
+            const inputVal = inputEl.value;
+            const outElement = document.getElementById(outputId);
+            
+            if (outElement) { outElement.textContent = inputVal; }
+            
+            if(inputId === 'input-name') document.getElementById('out-name-desktop').textContent = inputVal;
+            if(inputId === 'input-title') document.getElementById('out-title-desktop').textContent = inputVal;
+            if(inputId === 'input-contact') document.getElementById('out-contact-desktop').textContent = inputVal;
+            
+            if (inputId === 'input-skills') {
+                const outSkillsMain = document.getElementById('out-skills-main');
+                if (outSkillsMain) outSkillsMain.textContent = inputVal;
+            }
+            
+            const maxLen = inputEl.getAttribute('maxlength');
+            if (maxLen) {
+                const counterEl = document.getElementById(inputId.replace('input-', 'count-'));
+                if (counterEl) {
+                    const remaining = maxLen - inputVal.length;
+                    counterEl.textContent = '(' + remaining + ' restants)';
+                    counterEl.style.color = remaining < (maxLen * 0.1) ? '#ef4444' : '#94a3b8';
+                }
+            }
+            
+            updateProgress();
+        }
+
+        const taskAdder = document.getElementById('task-adder');
+        const inputExp = document.getElementById('input-exp');
+
+        document.getElementById('template-selector').addEventListener('change', function(e) {
+            const templateKey = e.target.value;
+            taskAdder.innerHTML = '<option value="">+ Ajouter une tâche / mission suggérée...</option>';
+            
+            if (templateKey !== "vide" && jobTemplates[templateKey]) {
+                const data = jobTemplates[templateKey];
+                
+                document.getElementById('input-title').value = data.title;
+                document.getElementById('input-skills').value = data.skills;
+                document.getElementById('input-profile').value = data.profile;
+                document.getElementById('input-exp').value = data.exp;
+                
+                const expLines = data.exp.split('\n');
+                const tasks = expLines.filter(line => line.startsWith('- ')).map(line => line.substring(2));
+                
+                tasks.forEach(task => {
+                    let opt = document.createElement('option');
+                    opt.value = task;
+                    opt.textContent = task;
+                    taskAdder.appendChild(opt);
+                });
+                
+                updateCV('input-title', 'out-title');
+                updateCV('input-skills', 'out-skills');
+                updateCV('input-profile', 'out-profile');
+                updateCV('input-exp', 'out-exp');
+                
+            } else {
+                document.getElementById('input-skills').value = "";
+                document.getElementById('input-exp').value = "";
+                updateCV('input-skills', 'out-skills');
+                updateCV('input-exp', 'out-exp');
+            }
+        });
+
+        taskAdder.addEventListener('change', function() {
+            if(this.value) {
+                const currentValue = inputExp.value;
+                const needsNewLine = currentValue.length > 0 && !currentValue.endsWith('\n');
+                const prefix = needsNewLine ? "\n- " : "- ";
+                
+                if (inputExp.value.length + prefix.length + this.value.length <= 800) {
+                    inputExp.value += prefix + this.value;
+                    updateCV('input-exp', 'out-exp');
+                }
+                
+                this.value = '';
+                inputExp.scrollTop = inputExp.scrollHeight;
+            }
+        });
+
+        const photoInput = document.getElementById('input-photo');
+        const photoPreview = document.getElementById('out-photo');
+        const photoOffsetSlider = document.getElementById('photo-offset');
+        const photoOffsetLabel = document.getElementById('photo-slider-label');
+
+        photoInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    photoPreview.src = e.target.result;
+                    photoPreview.style.display = 'block';
+                    photoOffsetSlider.style.display = 'block';
+                    photoOffsetLabel.style.display = 'block';
+                    photoPreview.style.objectPosition = '50% ' + photoOffsetSlider.value + '%';
+                }
+                reader.readAsDataURL(file);
+            } else { 
+                photoPreview.style.display = 'none'; 
+                photoOffsetSlider.style.display = 'none';
+                photoOffsetLabel.style.display = 'none';
+            }
+        });
+
+        photoOffsetSlider.addEventListener('input', function() {
+            photoPreview.style.objectPosition = '50% ' + this.value + '%';
+        });
+
+        const formatSelector = document.getElementById('format-selector');
+        const cvPreview = document.getElementById('cv-preview');
+        const headerDesktopElements = document.querySelectorAll('.header-desktop');
+        const headerMobileElements = document.querySelector('.cv-header-mobile');
+        const sidebarSkills = document.querySelector('.sidebar-section');
+        const mainContainer = document.querySelector('.cv-main');
+
+        function applyFormat(format) {
+            cvPreview.className = 'cv-preview ' + format;
+            if (format === 'format-competences') {
+                headerDesktopElements.forEach(el => el.style.display = 'none');
+                headerMobileElements.style.display = 'block';
+                sidebarSkills.style.display = 'block';
+                let mainSkills = document.getElementById('main-skills-section');
+                if(mainSkills) mainSkills.style.display = 'none';
+            } else {
+                headerDesktopElements.forEach(el => el.style.display = 'block');
+                headerMobileElements.style.display = 'none';
+                sidebarSkills.style.display = 'none';
+                let mainSkills = document.getElementById('main-skills-section');
+                if(!mainSkills) {
+                    mainSkills = document.createElement('div');
+                    mainSkills.id = 'main-skills-section';
+                    mainSkills.className = 'cv-section';
+                    mainSkills.innerHTML = '<h3>Compétences</h3><div id="out-skills-main" class="preserve-lines"></div>';
+                    mainContainer.insertBefore(mainSkills, mainContainer.children[2]);
+                }
+                mainSkills.style.display = 'block';
+                document.getElementById('out-skills-main').textContent = document.getElementById('input-skills').value;
+            }
+        }
+
+        formatSelector.addEventListener('change', function() { applyFormat(this.value); });
+        applyFormat('format-competences');
+        
+        const initialFields = ['input-name', 'input-title', 'input-contact', 'input-skills', 'input-profile', 'input-exp', 'input-edu', 'input-langues', 'input-interets'];
+        initialFields.forEach(id => {
+            updateCV(id, id.replace('input-', 'out-'));
+        });
+        
+        updateProgress();
+
+        function exportWord() {
+            const color = document.getElementById('color-picker').value;
+            const rawFont = document.getElementById('font-family-selector').value;
+            const font = rawFont ? rawFont : "'Segoe UI', Helvetica, sans-serif";
+            const fontSize = document.getElementById('font-size-selector').value;
+            const format = document.getElementById('format-selector').value;
+
+            const formatText = (id) => {
+                const val = document.getElementById(id).value;
+                return val ? val.replace(/\n/g, '<br>') : '';
+            };
+
+            const name = formatText('input-name');
+            const title = formatText('input-title');
+            const contact = formatText('input-contact');
+            const skills = formatText('input-skills');
+            const profile = formatText('input-profile');
+            const exp = formatText('input-exp');
+            const edu = formatText('input-edu');
+            const langues = formatText('input-langues');
+            const interets = formatText('input-interets');
+
+            const photoEl = document.getElementById('out-photo');
+            const hasPhoto = photoEl.style.display === 'block' && photoEl.src;
+            
+            // NOTE: Word (format .doc via HTML) interprète les attributs width/height sans unité
+            // comme des POINTS et non des pixels (1pt ≈ 1.33px). On utilise donc 90pt (≈120px)
+            // à la fois dans l'attribut et dans le style pour que la photo ait la même taille que dans l'aperçu.
+            const photoTag = hasPhoto ? `<div style="text-align:center; width:100%;"><img src="${photoEl.src}" width="90" height="90" style="width:90pt; height:90pt; border-radius:50%; margin:0 auto 15px auto; border:3px solid #fff; display:block;"></div>` : '';
+            const photoTagEpure = hasPhoto ? `<div style="text-align:center; width:100%;"><img src="${photoEl.src}" width="90" height="90" style="width:90pt; height:90pt; border-radius:50%; margin:0 auto 15px auto; border:3px solid ${color}; display:block;"></div>` : '';
+            const photoTagMinimaliste = hasPhoto ? `<img src="${photoEl.src}" width="90" height="90" style="width:90pt; height:90pt; margin:0 20px 0 0; border:2px solid #000;">` : '';
+            const photoTagCreatif = hasPhoto ? `<img src="${photoEl.src}" width="90" height="90" style="width:90pt; height:90pt; border-radius:10px; margin:0 0 0 20px;">` : '';
+
+            let contentHtml = '';
+
+            if (format === 'format-competences') {
+                contentHtml = `
+                <table width="100%" height="950" cellpadding="20" cellspacing="0" style="font-family:${font}; font-size:${fontSize}; border-collapse:collapse; width:100%; height:950px;">
+                    <tr height="950">
+                        <td width="35%" valign="top" style="background-color:${color}; color:#ffffff; padding:20px; height:950px;">
+                            <div style="text-align:center; width:100%;">
+                                ${photoTag}
+                                <h1 style="font-size:1.7em; margin:0 0 5px 0; color:#ffffff; text-transform:uppercase;">${name}</h1>
+                                <div style="font-size:1.15em; font-weight:bold; margin-bottom:20px;">${title}</div>
+                                <div style="font-size:0.95em; margin-bottom:30px;">${contact}</div>
+                            </div>
+                            <h3 style="color:#ffffff; border-bottom:1px solid rgba(255,255,255,0.3); padding-bottom:5px; text-transform:uppercase;">Compétences</h3>
+                            <div style="line-height:1.5;">${skills}</div>
+                        </td>
+                        <td width="65%" valign="top" style="padding:20px; color:#334155; height:950px;">
+                            <h3 style="font-size:1.15em; border-bottom:2px solid ${color}; padding-bottom:5px; color:${color}; text-transform:uppercase; margin-top:0;">Profil</h3>
+                            <div style="line-height:1.5; margin-bottom:25px;">${profile}</div>
+                            
+                            <h3 style="font-size:1.15em; border-bottom:2px solid ${color}; padding-bottom:5px; color:${color}; text-transform:uppercase;">Expériences Professionnelles</h3>
+                            <div style="line-height:1.5; margin-bottom:25px;">${exp}</div>
+                            
+                            <h3 style="font-size:1.15em; border-bottom:2px solid ${color}; padding-bottom:5px; color:${color}; text-transform:uppercase;">Formations</h3>
+                            <div style="line-height:1.5; margin-bottom:25px;">${edu}</div>
+
+                            <h3 style="font-size:1.15em; border-bottom:2px solid ${color}; padding-bottom:5px; color:${color}; text-transform:uppercase;">Langues</h3>
+                            <div style="line-height:1.5; margin-bottom:25px;">${langues}</div>
+
+                            <h3 style="font-size:1.15em; border-bottom:2px solid ${color}; padding-bottom:5px; color:${color}; text-transform:uppercase;">Centres d'intérêt</h3>
+                            <div style="line-height:1.5;">${interets}</div>
+                        </td>
+                    </tr>
+                </table>
+                `;
+            } else if (format === 'format-corporate') {
+                contentHtml = `
+                <div style="font-family:${font}; font-size:${fontSize}; color:#1a1a1a; padding:10px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="border-bottom:3px solid ${color}; margin-bottom:25px; padding-bottom:20px;">
+                        <tr>
+                            <td valign="middle">
+                                <h1 style="font-size:2.3em; margin:0; text-transform:uppercase; letter-spacing:1px; color:${color};">${name}</h1>
+                                <div style="font-size:1.3em; font-style:italic; color:#4a4a4a; margin-top:5px;">${title}</div>
+                                <div style="margin-top:10px;">${contact}</div>
+                            </td>
+                            <td valign="middle" align="right" width="130">
+                                ${photoTag}
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <h3 style="font-size:1.15em; text-transform:uppercase; color:${color}; background-color:#f1f5f9; padding:8px 10px; border-left:4px solid ${color}; margin-top:20px; margin-bottom:10px;">Profil</h3>
+                    <div style="line-height:1.5; margin-bottom:20px;">${profile}</div>
+                    
+                    <h3 style="font-size:1.15em; text-transform:uppercase; color:${color}; background-color:#f1f5f9; padding:8px 10px; border-left:4px solid ${color}; margin-top:20px; margin-bottom:10px;">Compétences</h3>
+                    <div style="line-height:1.5; margin-bottom:20px;">${skills}</div>
+
+                    <h3 style="font-size:1.15em; text-transform:uppercase; color:${color}; background-color:#f1f5f9; padding:8px 10px; border-left:4px solid ${color}; margin-top:20px; margin-bottom:10px;">Expériences Professionnelles</h3>
+                    <div style="line-height:1.5; margin-bottom:20px;">${exp}</div>
+                    
+                    <h3 style="font-size:1.15em; text-transform:uppercase; color:${color}; background-color:#f1f5f9; padding:8px 10px; border-left:4px solid ${color}; margin-top:20px; margin-bottom:10px;">Formations</h3>
+                    <div style="line-height:1.5; margin-bottom:20px;">${edu}</div>
+
+                    <h3 style="font-size:1.15em; text-transform:uppercase; color:${color}; background-color:#f1f5f9; padding:8px 10px; border-left:4px solid ${color}; margin-top:20px; margin-bottom:10px;">Langues</h3>
+                    <div style="line-height:1.5; margin-bottom:20px;">${langues}</div>
+
+                    <h3 style="font-size:1.15em; text-transform:uppercase; color:${color}; background-color:#f1f5f9; padding:8px 10px; border-left:4px solid ${color}; margin-top:20px; margin-bottom:10px;">Centres d'intérêt</h3>
+                    <div style="line-height:1.5;">${interets}</div>
+                </div>
+                `;
+            } else if (format === 'format-epure') {
+                contentHtml = `
+                <div style="font-family:${font}; font-size:${fontSize}; color:#2d3748; padding:10px;">
+                    <div style="text-align:center; margin-bottom:40px; width:100%;">
+                        ${photoTagEpure}
+                        <h1 style="font-size:2.5em; font-weight:300; margin:0; letter-spacing:2px;">${name}</h1>
+                        <div style="font-size:1.3em; color:${color}; margin-top:5px; font-weight:bold;">${title}</div>
+                        <div style="margin-top:15px; color:#718096;">${contact}</div>
+                    </div>
+                    
+                    <h3 style="font-size:1.4em; color:${color}; border-bottom:1px solid ${color}; padding-bottom:10px; margin-top:35px; margin-bottom:15px; font-weight:bold;">Profil</h3>
+                    <div style="line-height:1.5; margin-bottom:25px;">${profile}</div>
+
+                    <h3 style="font-size:1.4em; color:${color}; border-bottom:1px solid ${color}; padding-bottom:10px; margin-top:35px; margin-bottom:15px; font-weight:bold;">Compétences</h3>
+                    <div style="line-height:1.5; margin-bottom:25px;">${skills}</div>
+                    
+                    <h3 style="font-size:1.4em; color:${color}; border-bottom:1px solid ${color}; padding-bottom:10px; margin-top:35px; margin-bottom:15px; font-weight:bold;">Expériences Professionnelles</h3>
+                    <div style="line-height:1.5; margin-bottom:25px;">${exp}</div>
+                    
+                    <h3 style="font-size:1.4em; color:${color}; border-bottom:1px solid ${color}; padding-bottom:10px; margin-top:35px; margin-bottom:15px; font-weight:bold;">Formations</h3>
+                    <div style="line-height:1.5; margin-bottom:25px;">${edu}</div>
+
+                    <h3 style="font-size:1.4em; color:${color}; border-bottom:1px solid ${color}; padding-bottom:10px; margin-top:35px; margin-bottom:15px; font-weight:bold;">Langues</h3>
+                    <div style="line-height:1.5; margin-bottom:25px;">${langues}</div>
+
+                    <h3 style="font-size:1.4em; color:${color}; border-bottom:1px solid ${color}; padding-bottom:10px; margin-top:35px; margin-bottom:15px; font-weight:bold;">Centres d'intérêt</h3>
+                    <div style="line-height:1.5;">${interets}</div>
+                </div>
+                `;
+            } else if (format === 'format-minimaliste') {
+                contentHtml = `
+                <div style="font-family:${font}; font-size:${fontSize}; color:#000000; padding:10px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="border-bottom:2px solid #000; margin-bottom:20px; padding-bottom:20px;">
+                        <tr>
+                            ${hasPhoto ? `<td valign="middle" width="140">${photoTagMinimaliste}</td>` : ''}
+                            <td valign="middle">
+                                <h1 style="font-size:2.2em; font-weight:bold; margin:0; text-transform:uppercase; color:#000;">${name}</h1>
+                                <div style="font-size:1.3em; margin-top:5px; color:#333;">${title}</div>
+                                <div style="margin-top:10px;">${contact}</div>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <h3 style="font-size:1.2em; text-transform:uppercase; color:#000; border-bottom:1px dashed #000; padding-bottom:5px; margin-top:20px; margin-bottom:15px;">Profil</h3>
+                    <div style="line-height:1.5; margin-bottom:25px;">${profile}</div>
+                    
+                    <h3 style="font-size:1.2em; text-transform:uppercase; color:#000; border-bottom:1px dashed #000; padding-bottom:5px; margin-top:20px; margin-bottom:15px;">Compétences</h3>
+                    <div style="line-height:1.5; margin-bottom:25px;">${skills}</div>
+
+                    <h3 style="font-size:1.2em; text-transform:uppercase; color:#000; border-bottom:1px dashed #000; padding-bottom:5px; margin-top:20px; margin-bottom:15px;">Expériences Professionnelles</h3>
+                    <div style="line-height:1.5; margin-bottom:25px;">${exp}</div>
+                    
+                    <h3 style="font-size:1.2em; text-transform:uppercase; color:#000; border-bottom:1px dashed #000; padding-bottom:5px; margin-top:20px; margin-bottom:15px;">Formations</h3>
+                    <div style="line-height:1.5; margin-bottom:25px;">${edu}</div>
+
+                    <h3 style="font-size:1.2em; text-transform:uppercase; color:#000; border-bottom:1px dashed #000; padding-bottom:5px; margin-top:20px; margin-bottom:15px;">Langues</h3>
+                    <div style="line-height:1.5; margin-bottom:25px;">${langues}</div>
+
+                    <h3 style="font-size:1.2em; text-transform:uppercase; color:#000; border-bottom:1px dashed #000; padding-bottom:5px; margin-top:20px; margin-bottom:15px;">Centres d'intérêt</h3>
+                    <div style="line-height:1.5;">${interets}</div>
+                </div>
+                `;
+            } else if (format === 'format-creatif') {
+                contentHtml = `
+                <table width="100%" height="950" cellpadding="0" cellspacing="0" style="font-family:${font}; font-size:${fontSize}; border-collapse:collapse; height:950px; border:none;">
+                    <tr height="950">
+                        <td width="30" style="background-color:${color}; height:950px; width:30px;"></td>
+                        <td valign="top" style="padding:30px; color:#374151; height:950px;">
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:25px;">
+                                <tr>
+                                    <td valign="middle" align="left">
+                                        <h1 style="font-size:2.4em; font-weight:bold; margin:0; color:${color}; letter-spacing:-1px;">${name}</h1>
+                                        <div style="font-size:1.3em; font-weight:bold; margin-top:5px; color:#4b5563;">${title}</div>
+                                        <div style="margin-top:15px; color:#6b7280; border-left:3px solid ${color}; padding-left:10px;">${contact}</div>
+                                    </td>
+                                    ${hasPhoto ? `<td valign="middle" align="right" width="140">${photoTagCreatif}</td>` : ''}
+                                </tr>
+                            </table>
+                            
+                            <h3 style="font-size:1.2em; color:#fff; background-color:${color}; display:inline-block; padding:6px 15px; margin-top:20px; margin-bottom:15px;">Profil</h3>
+                            <div style="line-height:1.5; margin-bottom:25px;">${profile}</div>
+                            
+                            <h3 style="font-size:1.2em; color:#fff; background-color:${color}; display:inline-block; padding:6px 15px; margin-top:20px; margin-bottom:15px;">Compétences</h3>
+                            <div style="line-height:1.5; margin-bottom:25px;">${skills}</div>
+
+                            <h3 style="font-size:1.2em; color:#fff; background-color:${color}; display:inline-block; padding:6px 15px; margin-top:20px; margin-bottom:15px;">Expériences Professionnelles</h3>
+                            <div style="line-height:1.5; margin-bottom:25px;">${exp}</div>
+                            
+                            <h3 style="font-size:1.2em; color:#fff; background-color:${color}; display:inline-block; padding:6px 15px; margin-top:20px; margin-bottom:15px;">Formations</h3>
+                            <div style="line-height:1.5; margin-bottom:25px;">${edu}</div>
+
+                            <h3 style="font-size:1.2em; color:#fff; background-color:${color}; display:inline-block; padding:6px 15px; margin-top:20px; margin-bottom:15px;">Langues</h3>
+                            <div style="line-height:1.5; margin-bottom:25px;">${langues}</div>
+
+                            <h3 style="font-size:1.2em; color:#fff; background-color:${color}; display:inline-block; padding:6px 15px; margin-top:20px; margin-bottom:15px;">Centres d'intérêt</h3>
+                            <div style="line-height:1.5;">${interets}</div>
+                        </td>
+                    </tr>
+                </table>
+                `;
+            }
+
+            const html = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head>
+                <meta charset='utf-8'>
+                <title>CV</title>
+                <style>
+                    @page WordSection1 {
+                        size: 595.3pt 841.9pt;
+                        margin: 36.0pt 36.0pt 36.0pt 36.0pt;
+                    }
+                    div.WordSection1 { page: WordSection1; }
+                </style>
+            </head>
+            <body>
+                <div class="WordSection1">
+                    ${contentHtml}
+                </div>
+            </body>
+            </html>
+            `;
+
+            const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+            const downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            
+            if (navigator.msSaveOrOpenBlob) {
+                navigator.msSaveOrOpenBlob(blob, 'Mon_CV.doc');
+            } else {
+                const url = URL.createObjectURL(blob);
+                downloadLink.href = url;
+                downloadLink.download = 'Mon_CV.doc';
+                downloadLink.click();
+                URL.revokeObjectURL(url);
+            }
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+</body>
+</html>
