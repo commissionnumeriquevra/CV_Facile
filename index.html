@@ -60,16 +60,31 @@
         
         .preserve-lines { white-space: pre-wrap; line-height: 1.5; }
         
-        .cv-photo { 
-            width: 120px; 
-            height: 120px; 
-            border-radius: 50%; 
-            object-fit: cover; 
-            object-position: 50% 20%; 
-            display: none; 
-            border: 3px solid #fff; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
-            margin: 0 auto; 
+        /* Le CADRE définit la forme, la bordure et la taille visible : c'est lui qui
+           "coupe" l'image (overflow:hidden), une technique bien plus fiable à
+           l'impression que border-radius+object-fit appliqués directement sur l'img. */
+        .cv-photo-frame {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: none;
+            overflow: hidden;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin: 0 auto;
+            flex-shrink: 0;
+        }
+        /* L'image ne fait que remplir le cadre ; le recadrage (zoom/position du
+           visage) se fait ici via object-fit/object-position. */
+        .cv-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: 50% 20%;
+            display: block;
+            border: none;
+            box-shadow: none;
+            margin: 0;
         }
 
         /* -- MODÈLE 1 : PROFIL & COMPÉTENCES -- */
@@ -100,7 +115,7 @@
         .format-epure { flex-direction: column; color: #2d3748; font-family: var(--cv-font, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif); }
         .format-epure .cv-main { padding: 2cm 2.5cm; width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 30px; }
         .format-epure .cv-header { text-align: center; margin-bottom: 10px; }
-        .format-epure .cv-photo { margin: 0 auto 15px auto; border-color: var(--primary-color); display: block; }
+        .format-epure .cv-photo-frame { margin: 0 auto 15px auto; border-color: var(--primary-color); display: block; }
         .format-epure .cv-name { font-size: calc(var(--cv-font-size) * 2.5); font-weight: 300; margin: 0; letter-spacing: 2px; }
         .format-epure .cv-title { font-size: calc(var(--cv-font-size) * 1.3); color: var(--primary-color); margin-top: 5px; font-weight: 500; }
         .format-epure .cv-contact { margin-top: 15px; font-size: var(--cv-font-size); color: #718096; }
@@ -112,7 +127,7 @@
         .format-minimaliste .cv-main { padding: 2cm 2.5cm; width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 20px; }
         .format-minimaliste .cv-header { display: flex; align-items: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 10px; }
         .format-minimaliste .header-text { flex: 1; }
-        .format-minimaliste .cv-photo { margin: 0 20px 0 0; border: 2px solid #000; border-radius: 0; box-shadow: none; display: block; }
+        .format-minimaliste .cv-photo-frame { margin: 0 20px 0 0; border: 2px solid #000; border-radius: 0; box-shadow: none; display: block; }
         .format-minimaliste .cv-name { font-size: calc(var(--cv-font-size) * 2.2); font-weight: bold; margin: 0; text-transform: uppercase; color: #000; }
         .format-minimaliste .cv-title { font-size: calc(var(--cv-font-size) * 1.3); font-weight: normal; margin-top: 5px; color: #333; }
         .format-minimaliste .cv-contact { margin-top: 10px; font-size: var(--cv-font-size); }
@@ -124,7 +139,7 @@
         .format-creatif .cv-main { padding: 2cm 2cm; width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 25px; }
         .format-creatif .cv-header { display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .format-creatif .header-text { flex: 1; text-align: left; }
-        .format-creatif .cv-photo { margin: 0 0 0 20px; border: none; border-radius: 10px; box-shadow: 4px 4px 0px var(--primary-color); display: block; }
+        .format-creatif .cv-photo-frame { margin: 0 0 0 20px; border: none; border-radius: 10px; box-shadow: 4px 4px 0px var(--primary-color); display: block; }
         .format-creatif .cv-name { font-size: calc(var(--cv-font-size) * 2.4); font-weight: 900; margin: 0; color: var(--primary-color); letter-spacing: -1px; }
         .format-creatif .cv-title { font-size: calc(var(--cv-font-size) * 1.3); font-weight: bold; margin-top: 5px; color: #4b5563; }
         .format-creatif .cv-contact { margin-top: 15px; font-size: var(--cv-font-size); color: #6b7280; border-left: 3px solid var(--primary-color); padding-left: 10px; }
@@ -151,11 +166,19 @@
                 print-color-adjust: exact; 
             }
 
-            .cv-photo {
+            .cv-photo-frame {
                 width: 120px !important;
                 height: 120px !important;
                 max-width: 120px !important;
                 max-height: 120px !important;
+                overflow: hidden !important;
+            }
+
+            .cv-photo-frame .cv-photo {
+                width: 100% !important;
+                height: 100% !important;
+                max-width: none !important;
+                max-height: none !important;
             }
         }
     </style>
@@ -333,14 +356,16 @@ Anglais - Niveau B1</textarea></div>
 
         <div class="btn-group">
             <button class="btn-action btn-pdf" onclick="window.print()">Export PDF</button>
-            <button class="btn-action btn-word" onclick="exportWord()">Export Word</button>
+            <button class="btn-action btn-word" onclick="exportODF()">Export ODF (.odt)</button>
         </div>
     </div>
 
     <div class="preview-container">
         <div id="cv-preview" class="cv-preview format-competences">
             <div class="cv-sidebar">
-                <img id="out-photo" class="cv-photo" alt="Photo">
+                <div id="photo-frame" class="cv-photo-frame">
+                    <img id="out-photo" class="cv-photo" alt="Photo">
+                </div>
                 <div class="cv-header-mobile">
                     <h1 class="cv-name" id="out-name">Prénom NOM</h1>
                     <div class="cv-title" id="out-title">Titre du poste</div>
@@ -562,6 +587,7 @@ Anglais - Niveau B1</textarea></div>
 
         const photoInput = document.getElementById('input-photo');
         const photoPreview = document.getElementById('out-photo');
+        const photoFrame = document.getElementById('photo-frame');
         const photoOffsetSlider = document.getElementById('photo-offset');
         const photoOffsetLabel = document.getElementById('photo-slider-label');
 
@@ -572,6 +598,7 @@ Anglais - Niveau B1</textarea></div>
                 reader.onload = function(e) {
                     photoPreview.src = e.target.result;
                     photoPreview.style.display = 'block';
+                    photoFrame.style.display = 'block';
                     photoOffsetSlider.style.display = 'block';
                     photoOffsetLabel.style.display = 'block';
                     photoPreview.style.objectPosition = '50% ' + photoOffsetSlider.value + '%';
@@ -579,6 +606,7 @@ Anglais - Niveau B1</textarea></div>
                 reader.readAsDataURL(file);
             } else { 
                 photoPreview.style.display = 'none'; 
+                photoFrame.style.display = 'none';
                 photoOffsetSlider.style.display = 'none';
                 photoOffsetLabel.style.display = 'none';
             }
@@ -594,6 +622,9 @@ Anglais - Niveau B1</textarea></div>
         const headerMobileElements = document.querySelector('.cv-header-mobile');
         const sidebarSkills = document.querySelector('.sidebar-section');
         const mainContainer = document.querySelector('.cv-main');
+        const sidebarContainer = document.querySelector('.cv-sidebar');
+        const cvHeaderContainer = document.querySelector('.cv-header');
+        const headerTextContainer = document.querySelector('.header-text');
 
         function applyFormat(format) {
             cvPreview.className = 'cv-preview ' + format;
@@ -603,6 +634,8 @@ Anglais - Niveau B1</textarea></div>
                 sidebarSkills.style.display = 'block';
                 let mainSkills = document.getElementById('main-skills-section');
                 if(mainSkills) mainSkills.style.display = 'none';
+                // La photo reprend sa place au sommet de la barre latérale.
+                sidebarContainer.insertBefore(photoFrame, headerMobileElements);
             } else {
                 headerDesktopElements.forEach(el => el.style.display = 'block');
                 headerMobileElements.style.display = 'none';
@@ -616,6 +649,18 @@ Anglais - Niveau B1</textarea></div>
                     mainContainer.insertBefore(mainSkills, mainContainer.children[2]);
                 }
                 mainSkills.style.display = 'block';
+                // La photo rejoint réellement l'en-tête du modèle choisi, au lieu de
+                // rester dans la barre latérale : c'est ce qui la faisait apparaître
+                // détachée du nom/titre (et mal positionnée à l'impression) sur les
+                // modèles Minimaliste, Corporate et Créatif.
+                if (format === 'format-corporate') {
+                    // Texte à gauche, photo à droite.
+                    cvHeaderContainer.appendChild(photoFrame);
+                } else {
+                    // Épuré (centré au-dessus) / Minimaliste / Créatif (photo avant le texte,
+                    // affichée à droite pour Créatif grâce à flex-direction: row-reverse).
+                    cvHeaderContainer.insertBefore(photoFrame, headerTextContainer);
+                }
                 document.getElementById('out-skills-main').textContent = document.getElementById('input-skills').value;
             }
         }
@@ -630,246 +675,294 @@ Anglais - Niveau B1</textarea></div>
         
         updateProgress();
 
-        function exportWord() {
+        // ===================== Génération ODF (.odt) =====================
+        // Tout se passe en local dans le navigateur : construction manuelle
+        // d'une archive ZIP (méthode "store", sans compression) contenant les
+        // fichiers XML d'un document OpenDocument Text valide. Aucune librairie
+        // externe, aucun appel réseau.
+
+        function crc32(bytes) {
+            if (!crc32.table) {
+                const table = [];
+                for (let n = 0; n < 256; n++) {
+                    let c = n;
+                    for (let k = 0; k < 8; k++) {
+                        c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+                    }
+                    table[n] = c;
+                }
+                crc32.table = table;
+            }
+            let crc = 0xFFFFFFFF;
+            for (let i = 0; i < bytes.length; i++) {
+                crc = (crc >>> 8) ^ crc32.table[(crc ^ bytes[i]) & 0xFF];
+            }
+            return (crc ^ 0xFFFFFFFF) >>> 0;
+        }
+
+        function buildZip(files) {
+            const dosTime = 0, dosDate = 0x0021; // 1er janvier 1980, valeur neutre
+            let offset = 0;
+            const localParts = [];
+            const centralParts = [];
+            const encoder = new TextEncoder();
+
+            files.forEach(f => {
+                const nameBytes = encoder.encode(f.name);
+                const data = f.data;
+                const crc = crc32(data);
+                const size = data.length;
+
+                const localHeader = new Uint8Array(30 + nameBytes.length);
+                const dv = new DataView(localHeader.buffer);
+                dv.setUint32(0, 0x04034b50, true);
+                dv.setUint16(4, 20, true);
+                dv.setUint16(6, 0, true);
+                dv.setUint16(8, 0, true);
+                dv.setUint16(10, dosTime, true);
+                dv.setUint16(12, dosDate, true);
+                dv.setUint32(14, crc, true);
+                dv.setUint32(18, size, true);
+                dv.setUint32(22, size, true);
+                dv.setUint16(26, nameBytes.length, true);
+                dv.setUint16(28, 0, true);
+                localHeader.set(nameBytes, 30);
+                localParts.push(localHeader, data);
+
+                const centralHeader = new Uint8Array(46 + nameBytes.length);
+                const cdv = new DataView(centralHeader.buffer);
+                cdv.setUint32(0, 0x02014b50, true);
+                cdv.setUint16(4, 20, true);
+                cdv.setUint16(6, 20, true);
+                cdv.setUint16(8, 0, true);
+                cdv.setUint16(10, 0, true);
+                cdv.setUint16(12, dosTime, true);
+                cdv.setUint16(14, dosDate, true);
+                cdv.setUint32(16, crc, true);
+                cdv.setUint32(20, size, true);
+                cdv.setUint32(24, size, true);
+                cdv.setUint16(28, nameBytes.length, true);
+                cdv.setUint16(30, 0, true);
+                cdv.setUint16(32, 0, true);
+                cdv.setUint16(34, 0, true);
+                cdv.setUint16(36, 0, true);
+                cdv.setUint32(38, 0, true);
+                cdv.setUint32(42, offset, true);
+                centralHeader.set(nameBytes, 46);
+                centralParts.push(centralHeader);
+
+                offset += localHeader.length + data.length;
+            });
+
+            const centralDirOffset = offset;
+            const centralDirSize = centralParts.reduce((a, p) => a + p.length, 0);
+
+            const eocd = new Uint8Array(22);
+            const edv = new DataView(eocd.buffer);
+            edv.setUint32(0, 0x06054b50, true);
+            edv.setUint16(4, 0, true);
+            edv.setUint16(6, 0, true);
+            edv.setUint16(8, files.length, true);
+            edv.setUint16(10, files.length, true);
+            edv.setUint32(12, centralDirSize, true);
+            edv.setUint32(16, centralDirOffset, true);
+            edv.setUint16(20, 0, true);
+
+            const allParts = [...localParts, ...centralParts, eocd];
+            const total = allParts.reduce((a, p) => a + p.length, 0);
+            const result = new Uint8Array(total);
+            let pos = 0;
+            allParts.forEach(p => { result.set(p, pos); pos += p.length; });
+            return result;
+        }
+
+        function escapeXml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function dataURLToBytes(dataUrl) {
+            const commaIdx = dataUrl.indexOf(',');
+            const header = dataUrl.substring(5, commaIdx);
+            const mime = (header.split(';')[0] || 'image/jpeg').trim();
+            const binary = atob(dataUrl.substring(commaIdx + 1));
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return { bytes, mime };
+        }
+
+        function exportODF() {
             const color = document.getElementById('color-picker').value;
             const rawFont = document.getElementById('font-family-selector').value;
-            const font = rawFont ? rawFont : "'Segoe UI', Helvetica, sans-serif";
-            const fontSize = document.getElementById('font-size-selector').value;
+            const fontSizePx = document.getElementById('font-size-selector').value;
             const format = document.getElementById('format-selector').value;
 
-            const formatText = (id) => {
-                const val = document.getElementById(id).value;
-                return val ? val.replace(/\n/g, '<br>') : '';
-            };
+            const fontFamily = (() => {
+                if (!rawFont) return 'Calibri';
+                return rawFont.split(',')[0].trim().replace(/^['"]|['"]$/g, '');
+            })();
 
-            const name = formatText('input-name');
-            const title = formatText('input-title');
-            const contact = formatText('input-contact');
-            const skills = formatText('input-skills');
-            const profile = formatText('input-profile');
-            const exp = formatText('input-exp');
-            const edu = formatText('input-edu');
-            const langues = formatText('input-langues');
-            const interets = formatText('input-interets');
+            const fontSizePt = parseFloat(fontSizePx) * 0.75;
+            const bodySize = fontSizePt.toFixed(1);
+            const nameSize = (fontSizePt * 2.2).toFixed(1);
+            const titleSize = (fontSizePt * 1.3).toFixed(1);
+            const headingSize = (fontSizePt * 1.15).toFixed(1);
+
+            const rawVal = (id) => document.getElementById(id).value || '';
+            const rawName = rawVal('input-name') || 'Prénom NOM';
+            const rawTitle = rawVal('input-title');
+            const rawContact = rawVal('input-contact');
+            const rawSkills = rawVal('input-skills');
+            const rawProfile = rawVal('input-profile');
+            const rawExp = rawVal('input-exp');
+            const rawEdu = rawVal('input-edu');
+            const rawLangues = rawVal('input-langues');
+            const rawInterets = rawVal('input-interets');
 
             const photoEl = document.getElementById('out-photo');
-            const hasPhoto = photoEl.style.display === 'block' && photoEl.src;
-            
-            // NOTE: Word (format .doc via HTML) interprète les attributs width/height sans unité
-            // comme des POINTS et non des pixels (1pt ≈ 1.33px). On utilise donc 90pt (≈120px)
-            // à la fois dans l'attribut et dans le style pour que la photo ait la même taille que dans l'aperçu.
-            const photoTag = hasPhoto ? `<div style="text-align:center; width:100%;"><img src="${photoEl.src}" width="90" height="90" style="width:90pt; height:90pt; border-radius:50%; margin:0 auto 15px auto; border:3px solid #fff; display:block;"></div>` : '';
-            const photoTagEpure = hasPhoto ? `<div style="text-align:center; width:100%;"><img src="${photoEl.src}" width="90" height="90" style="width:90pt; height:90pt; border-radius:50%; margin:0 auto 15px auto; border:3px solid ${color}; display:block;"></div>` : '';
-            const photoTagMinimaliste = hasPhoto ? `<img src="${photoEl.src}" width="90" height="90" style="width:90pt; height:90pt; margin:0 20px 0 0; border:2px solid #000;">` : '';
-            const photoTagCreatif = hasPhoto ? `<img src="${photoEl.src}" width="90" height="90" style="width:90pt; height:90pt; border-radius:10px; margin:0 0 0 20px;">` : '';
+            const hasPhoto = photoEl.style.display === 'block' && photoEl.src && photoEl.src.indexOf('data:') === 0;
 
-            let contentHtml = '';
+            const embeddedFiles = [];
+            let photoFrameXml = '';
 
-            if (format === 'format-competences') {
-                contentHtml = `
-                <table width="100%" height="950" cellpadding="20" cellspacing="0" style="font-family:${font}; font-size:${fontSize}; border-collapse:collapse; width:100%; height:950px;">
-                    <tr height="950">
-                        <td width="35%" valign="top" style="background-color:${color}; color:#ffffff; padding:20px; height:950px;">
-                            <div style="text-align:center; width:100%;">
-                                ${photoTag}
-                                <h1 style="font-size:1.7em; margin:0 0 5px 0; color:#ffffff; text-transform:uppercase;">${name}</h1>
-                                <div style="font-size:1.15em; font-weight:bold; margin-bottom:20px;">${title}</div>
-                                <div style="font-size:0.95em; margin-bottom:30px;">${contact}</div>
-                            </div>
-                            <h3 style="color:#ffffff; border-bottom:1px solid rgba(255,255,255,0.3); padding-bottom:5px; text-transform:uppercase;">Compétences</h3>
-                            <div style="line-height:1.5;">${skills}</div>
-                        </td>
-                        <td width="65%" valign="top" style="padding:20px; color:#334155; height:950px;">
-                            <h3 style="font-size:1.15em; border-bottom:2px solid ${color}; padding-bottom:5px; color:${color}; text-transform:uppercase; margin-top:0;">Profil</h3>
-                            <div style="line-height:1.5; margin-bottom:25px;">${profile}</div>
-                            
-                            <h3 style="font-size:1.15em; border-bottom:2px solid ${color}; padding-bottom:5px; color:${color}; text-transform:uppercase;">Expériences Professionnelles</h3>
-                            <div style="line-height:1.5; margin-bottom:25px;">${exp}</div>
-                            
-                            <h3 style="font-size:1.15em; border-bottom:2px solid ${color}; padding-bottom:5px; color:${color}; text-transform:uppercase;">Formations</h3>
-                            <div style="line-height:1.5; margin-bottom:25px;">${edu}</div>
-
-                            <h3 style="font-size:1.15em; border-bottom:2px solid ${color}; padding-bottom:5px; color:${color}; text-transform:uppercase;">Langues</h3>
-                            <div style="line-height:1.5; margin-bottom:25px;">${langues}</div>
-
-                            <h3 style="font-size:1.15em; border-bottom:2px solid ${color}; padding-bottom:5px; color:${color}; text-transform:uppercase;">Centres d'intérêt</h3>
-                            <div style="line-height:1.5;">${interets}</div>
-                        </td>
-                    </tr>
-                </table>
-                `;
-            } else if (format === 'format-corporate') {
-                contentHtml = `
-                <div style="font-family:${font}; font-size:${fontSize}; color:#1a1a1a; padding:10px;">
-                    <table width="100%" cellpadding="0" cellspacing="0" style="border-bottom:3px solid ${color}; margin-bottom:25px; padding-bottom:20px;">
-                        <tr>
-                            <td valign="middle">
-                                <h1 style="font-size:2.3em; margin:0; text-transform:uppercase; letter-spacing:1px; color:${color};">${name}</h1>
-                                <div style="font-size:1.3em; font-style:italic; color:#4a4a4a; margin-top:5px;">${title}</div>
-                                <div style="margin-top:10px;">${contact}</div>
-                            </td>
-                            <td valign="middle" align="right" width="130">
-                                ${photoTag}
-                            </td>
-                        </tr>
-                    </table>
-                    
-                    <h3 style="font-size:1.15em; text-transform:uppercase; color:${color}; background-color:#f1f5f9; padding:8px 10px; border-left:4px solid ${color}; margin-top:20px; margin-bottom:10px;">Profil</h3>
-                    <div style="line-height:1.5; margin-bottom:20px;">${profile}</div>
-                    
-                    <h3 style="font-size:1.15em; text-transform:uppercase; color:${color}; background-color:#f1f5f9; padding:8px 10px; border-left:4px solid ${color}; margin-top:20px; margin-bottom:10px;">Compétences</h3>
-                    <div style="line-height:1.5; margin-bottom:20px;">${skills}</div>
-
-                    <h3 style="font-size:1.15em; text-transform:uppercase; color:${color}; background-color:#f1f5f9; padding:8px 10px; border-left:4px solid ${color}; margin-top:20px; margin-bottom:10px;">Expériences Professionnelles</h3>
-                    <div style="line-height:1.5; margin-bottom:20px;">${exp}</div>
-                    
-                    <h3 style="font-size:1.15em; text-transform:uppercase; color:${color}; background-color:#f1f5f9; padding:8px 10px; border-left:4px solid ${color}; margin-top:20px; margin-bottom:10px;">Formations</h3>
-                    <div style="line-height:1.5; margin-bottom:20px;">${edu}</div>
-
-                    <h3 style="font-size:1.15em; text-transform:uppercase; color:${color}; background-color:#f1f5f9; padding:8px 10px; border-left:4px solid ${color}; margin-top:20px; margin-bottom:10px;">Langues</h3>
-                    <div style="line-height:1.5; margin-bottom:20px;">${langues}</div>
-
-                    <h3 style="font-size:1.15em; text-transform:uppercase; color:${color}; background-color:#f1f5f9; padding:8px 10px; border-left:4px solid ${color}; margin-top:20px; margin-bottom:10px;">Centres d'intérêt</h3>
-                    <div style="line-height:1.5;">${interets}</div>
-                </div>
-                `;
-            } else if (format === 'format-epure') {
-                contentHtml = `
-                <div style="font-family:${font}; font-size:${fontSize}; color:#2d3748; padding:10px;">
-                    <div style="text-align:center; margin-bottom:40px; width:100%;">
-                        ${photoTagEpure}
-                        <h1 style="font-size:2.5em; font-weight:300; margin:0; letter-spacing:2px;">${name}</h1>
-                        <div style="font-size:1.3em; color:${color}; margin-top:5px; font-weight:bold;">${title}</div>
-                        <div style="margin-top:15px; color:#718096;">${contact}</div>
-                    </div>
-                    
-                    <h3 style="font-size:1.4em; color:${color}; border-bottom:1px solid ${color}; padding-bottom:10px; margin-top:35px; margin-bottom:15px; font-weight:bold;">Profil</h3>
-                    <div style="line-height:1.5; margin-bottom:25px;">${profile}</div>
-
-                    <h3 style="font-size:1.4em; color:${color}; border-bottom:1px solid ${color}; padding-bottom:10px; margin-top:35px; margin-bottom:15px; font-weight:bold;">Compétences</h3>
-                    <div style="line-height:1.5; margin-bottom:25px;">${skills}</div>
-                    
-                    <h3 style="font-size:1.4em; color:${color}; border-bottom:1px solid ${color}; padding-bottom:10px; margin-top:35px; margin-bottom:15px; font-weight:bold;">Expériences Professionnelles</h3>
-                    <div style="line-height:1.5; margin-bottom:25px;">${exp}</div>
-                    
-                    <h3 style="font-size:1.4em; color:${color}; border-bottom:1px solid ${color}; padding-bottom:10px; margin-top:35px; margin-bottom:15px; font-weight:bold;">Formations</h3>
-                    <div style="line-height:1.5; margin-bottom:25px;">${edu}</div>
-
-                    <h3 style="font-size:1.4em; color:${color}; border-bottom:1px solid ${color}; padding-bottom:10px; margin-top:35px; margin-bottom:15px; font-weight:bold;">Langues</h3>
-                    <div style="line-height:1.5; margin-bottom:25px;">${langues}</div>
-
-                    <h3 style="font-size:1.4em; color:${color}; border-bottom:1px solid ${color}; padding-bottom:10px; margin-top:35px; margin-bottom:15px; font-weight:bold;">Centres d'intérêt</h3>
-                    <div style="line-height:1.5;">${interets}</div>
-                </div>
-                `;
-            } else if (format === 'format-minimaliste') {
-                contentHtml = `
-                <div style="font-family:${font}; font-size:${fontSize}; color:#000000; padding:10px;">
-                    <table width="100%" cellpadding="0" cellspacing="0" style="border-bottom:2px solid #000; margin-bottom:20px; padding-bottom:20px;">
-                        <tr>
-                            ${hasPhoto ? `<td valign="middle" width="140">${photoTagMinimaliste}</td>` : ''}
-                            <td valign="middle">
-                                <h1 style="font-size:2.2em; font-weight:bold; margin:0; text-transform:uppercase; color:#000;">${name}</h1>
-                                <div style="font-size:1.3em; margin-top:5px; color:#333;">${title}</div>
-                                <div style="margin-top:10px;">${contact}</div>
-                            </td>
-                        </tr>
-                    </table>
-                    
-                    <h3 style="font-size:1.2em; text-transform:uppercase; color:#000; border-bottom:1px dashed #000; padding-bottom:5px; margin-top:20px; margin-bottom:15px;">Profil</h3>
-                    <div style="line-height:1.5; margin-bottom:25px;">${profile}</div>
-                    
-                    <h3 style="font-size:1.2em; text-transform:uppercase; color:#000; border-bottom:1px dashed #000; padding-bottom:5px; margin-top:20px; margin-bottom:15px;">Compétences</h3>
-                    <div style="line-height:1.5; margin-bottom:25px;">${skills}</div>
-
-                    <h3 style="font-size:1.2em; text-transform:uppercase; color:#000; border-bottom:1px dashed #000; padding-bottom:5px; margin-top:20px; margin-bottom:15px;">Expériences Professionnelles</h3>
-                    <div style="line-height:1.5; margin-bottom:25px;">${exp}</div>
-                    
-                    <h3 style="font-size:1.2em; text-transform:uppercase; color:#000; border-bottom:1px dashed #000; padding-bottom:5px; margin-top:20px; margin-bottom:15px;">Formations</h3>
-                    <div style="line-height:1.5; margin-bottom:25px;">${edu}</div>
-
-                    <h3 style="font-size:1.2em; text-transform:uppercase; color:#000; border-bottom:1px dashed #000; padding-bottom:5px; margin-top:20px; margin-bottom:15px;">Langues</h3>
-                    <div style="line-height:1.5; margin-bottom:25px;">${langues}</div>
-
-                    <h3 style="font-size:1.2em; text-transform:uppercase; color:#000; border-bottom:1px dashed #000; padding-bottom:5px; margin-top:20px; margin-bottom:15px;">Centres d'intérêt</h3>
-                    <div style="line-height:1.5;">${interets}</div>
-                </div>
-                `;
-            } else if (format === 'format-creatif') {
-                contentHtml = `
-                <table width="100%" height="950" cellpadding="0" cellspacing="0" style="font-family:${font}; font-size:${fontSize}; border-collapse:collapse; height:950px; border:none;">
-                    <tr height="950">
-                        <td width="30" style="background-color:${color}; height:950px; width:30px;"></td>
-                        <td valign="top" style="padding:30px; color:#374151; height:950px;">
-                            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:25px;">
-                                <tr>
-                                    <td valign="middle" align="left">
-                                        <h1 style="font-size:2.4em; font-weight:bold; margin:0; color:${color}; letter-spacing:-1px;">${name}</h1>
-                                        <div style="font-size:1.3em; font-weight:bold; margin-top:5px; color:#4b5563;">${title}</div>
-                                        <div style="margin-top:15px; color:#6b7280; border-left:3px solid ${color}; padding-left:10px;">${contact}</div>
-                                    </td>
-                                    ${hasPhoto ? `<td valign="middle" align="right" width="140">${photoTagCreatif}</td>` : ''}
-                                </tr>
-                            </table>
-                            
-                            <h3 style="font-size:1.2em; color:#fff; background-color:${color}; display:inline-block; padding:6px 15px; margin-top:20px; margin-bottom:15px;">Profil</h3>
-                            <div style="line-height:1.5; margin-bottom:25px;">${profile}</div>
-                            
-                            <h3 style="font-size:1.2em; color:#fff; background-color:${color}; display:inline-block; padding:6px 15px; margin-top:20px; margin-bottom:15px;">Compétences</h3>
-                            <div style="line-height:1.5; margin-bottom:25px;">${skills}</div>
-
-                            <h3 style="font-size:1.2em; color:#fff; background-color:${color}; display:inline-block; padding:6px 15px; margin-top:20px; margin-bottom:15px;">Expériences Professionnelles</h3>
-                            <div style="line-height:1.5; margin-bottom:25px;">${exp}</div>
-                            
-                            <h3 style="font-size:1.2em; color:#fff; background-color:${color}; display:inline-block; padding:6px 15px; margin-top:20px; margin-bottom:15px;">Formations</h3>
-                            <div style="line-height:1.5; margin-bottom:25px;">${edu}</div>
-
-                            <h3 style="font-size:1.2em; color:#fff; background-color:${color}; display:inline-block; padding:6px 15px; margin-top:20px; margin-bottom:15px;">Langues</h3>
-                            <div style="line-height:1.5; margin-bottom:25px;">${langues}</div>
-
-                            <h3 style="font-size:1.2em; color:#fff; background-color:${color}; display:inline-block; padding:6px 15px; margin-top:20px; margin-bottom:15px;">Centres d'intérêt</h3>
-                            <div style="line-height:1.5;">${interets}</div>
-                        </td>
-                    </tr>
-                </table>
-                `;
+            if (hasPhoto) {
+                const { bytes, mime } = dataURLToBytes(photoEl.src);
+                const isPng = mime.indexOf('png') !== -1;
+                const ext = isPng ? 'png' : 'jpg';
+                const mediaType = isPng ? 'image/png' : 'image/jpeg';
+                embeddedFiles.push({ name: 'Pictures/photo.' + ext, data: bytes, mediaType });
+                photoFrameXml = '<draw:frame text:anchor-type="as-char" svg:width="4cm" svg:height="4cm">'
+                    + '<draw:image xlink:href="Pictures/photo.' + ext + '" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/>'
+                    + '</draw:frame>';
             }
 
-            const html = `
-            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-            <head>
-                <meta charset='utf-8'>
-                <title>CV</title>
-                <style>
-                    @page WordSection1 {
-                        size: 595.3pt 841.9pt;
-                        margin: 36.0pt 36.0pt 36.0pt 36.0pt;
-                    }
-                    div.WordSection1 { page: WordSection1; }
-                </style>
-            </head>
-            <body>
-                <div class="WordSection1">
-                    ${contentHtml}
-                </div>
-            </body>
-            </html>
+            const esc = escapeXml;
+            const paragraphsFromLines = (text, styleName) => {
+                const lines = text ? text.split('\n') : [''];
+                return lines.map(line => '<text:p text:style-name="' + styleName + '">' + esc(line) + '</text:p>').join('');
+            };
+
+            const automaticStyles = `
+                <style:style style:name="P-Name-White" style:family="paragraph"><style:text-properties fo:font-size="${nameSize}pt" fo:font-weight="bold" fo:color="#ffffff" fo:font-family="${fontFamily}"/></style:style>
+                <style:style style:name="P-Name-Color" style:family="paragraph"><style:text-properties fo:font-size="${nameSize}pt" fo:font-weight="bold" fo:color="${color}" fo:font-family="${fontFamily}"/></style:style>
+                <style:style style:name="P-Title-White" style:family="paragraph"><style:text-properties fo:font-size="${titleSize}pt" fo:color="#ffffff" fo:font-family="${fontFamily}"/></style:style>
+                <style:style style:name="P-Title-Gray" style:family="paragraph"><style:text-properties fo:font-size="${titleSize}pt" fo:font-style="italic" fo:color="#4a4a4a" fo:font-family="${fontFamily}"/></style:style>
+                <style:style style:name="P-Contact-White" style:family="paragraph"><style:text-properties fo:font-size="${bodySize}pt" fo:color="#ffffff" fo:font-family="${fontFamily}"/></style:style>
+                <style:style style:name="P-Contact-Gray" style:family="paragraph"><style:text-properties fo:font-size="${bodySize}pt" fo:color="#555555" fo:font-family="${fontFamily}"/></style:style>
+                <style:style style:name="P-Heading-White" style:family="paragraph"><style:paragraph-properties fo:margin-top="0.4cm" fo:margin-bottom="0.2cm"/><style:text-properties fo:font-size="${headingSize}pt" fo:font-weight="bold" fo:color="#ffffff" fo:font-family="${fontFamily}"/></style:style>
+                <style:style style:name="P-Heading-Color" style:family="paragraph"><style:paragraph-properties fo:margin-top="0.5cm" fo:margin-bottom="0.25cm" fo:border-bottom="1pt solid ${color}" fo:padding-bottom="0.1cm"/><style:text-properties fo:font-size="${headingSize}pt" fo:font-weight="bold" fo:color="${color}" fo:font-family="${fontFamily}"/></style:style>
+                <style:style style:name="P-Body" style:family="paragraph"><style:text-properties fo:font-size="${bodySize}pt" fo:color="#222222" fo:font-family="${fontFamily}"/></style:style>
+                <style:style style:name="P-Body-White" style:family="paragraph"><style:text-properties fo:font-size="${bodySize}pt" fo:color="#ffffff" fo:font-family="${fontFamily}"/></style:style>
+                <style:style style:name="P-Center" style:family="paragraph"><style:paragraph-properties fo:text-align="center"/></style:style>
+                <style:style style:name="Table-Sidebar" style:family="table"><style:table-properties style:width="17cm" table:align="margins"/></style:style>
+                <style:style style:name="Col-Left" style:family="table-column"><style:table-column-properties style:column-width="6cm"/></style:style>
+                <style:style style:name="Col-Right" style:family="table-column"><style:table-column-properties style:column-width="11cm"/></style:style>
+                <style:style style:name="Cell-Left" style:family="table-cell"><style:table-cell-properties fo:background-color="${color}" fo:padding="0.5cm"/></style:style>
+                <style:style style:name="Cell-Right" style:family="table-cell"><style:table-cell-properties fo:background-color="#ffffff" fo:padding="0.5cm"/></style:style>
             `;
 
-            const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
-            const downloadLink = document.createElement("a");
-            document.body.appendChild(downloadLink);
-            
-            if (navigator.msSaveOrOpenBlob) {
-                navigator.msSaveOrOpenBlob(blob, 'Mon_CV.doc');
+            let bodyXml;
+            if (format === 'format-competences') {
+                bodyXml = `
+                <table:table table:name="CVTable" table:style-name="Table-Sidebar">
+                    <table:table-column table:style-name="Col-Left"/>
+                    <table:table-column table:style-name="Col-Right"/>
+                    <table:table-row>
+                        <table:table-cell table:style-name="Cell-Left">
+                            ${photoFrameXml ? '<text:p text:style-name="P-Center">' + photoFrameXml + '</text:p>' : ''}
+                            <text:p text:style-name="P-Name-White">${esc(rawName)}</text:p>
+                            <text:p text:style-name="P-Title-White">${esc(rawTitle)}</text:p>
+                            <text:p text:style-name="P-Contact-White">${esc(rawContact)}</text:p>
+                            <text:p text:style-name="P-Heading-White">COMPÉTENCES</text:p>
+                            ${paragraphsFromLines(rawSkills, 'P-Body-White')}
+                        </table:table-cell>
+                        <table:table-cell table:style-name="Cell-Right">
+                            <text:p text:style-name="P-Heading-Color">Profil</text:p>
+                            ${paragraphsFromLines(rawProfile, 'P-Body')}
+                            <text:p text:style-name="P-Heading-Color">Expériences Professionnelles</text:p>
+                            ${paragraphsFromLines(rawExp, 'P-Body')}
+                            <text:p text:style-name="P-Heading-Color">Formations</text:p>
+                            ${paragraphsFromLines(rawEdu, 'P-Body')}
+                            <text:p text:style-name="P-Heading-Color">Langues</text:p>
+                            ${paragraphsFromLines(rawLangues, 'P-Body')}
+                            <text:p text:style-name="P-Heading-Color">Centres d'intérêt</text:p>
+                            ${paragraphsFromLines(rawInterets, 'P-Body')}
+                        </table:table-cell>
+                    </table:table-row>
+                </table:table>`;
             } else {
-                const url = URL.createObjectURL(blob);
-                downloadLink.href = url;
-                downloadLink.download = 'Mon_CV.doc';
-                downloadLink.click();
-                URL.revokeObjectURL(url);
+                bodyXml = `
+                ${photoFrameXml ? '<text:p text:style-name="P-Center">' + photoFrameXml + '</text:p>' : ''}
+                <text:p text:style-name="P-Name-Color">${esc(rawName)}</text:p>
+                <text:p text:style-name="P-Title-Gray">${esc(rawTitle)}</text:p>
+                <text:p text:style-name="P-Contact-Gray">${esc(rawContact)}</text:p>
+                <text:p text:style-name="P-Heading-Color">Profil</text:p>
+                ${paragraphsFromLines(rawProfile, 'P-Body')}
+                <text:p text:style-name="P-Heading-Color">Compétences</text:p>
+                ${paragraphsFromLines(rawSkills, 'P-Body')}
+                <text:p text:style-name="P-Heading-Color">Expériences Professionnelles</text:p>
+                ${paragraphsFromLines(rawExp, 'P-Body')}
+                <text:p text:style-name="P-Heading-Color">Formations</text:p>
+                ${paragraphsFromLines(rawEdu, 'P-Body')}
+                <text:p text:style-name="P-Heading-Color">Langues</text:p>
+                ${paragraphsFromLines(rawLangues, 'P-Body')}
+                <text:p text:style-name="P-Heading-Color">Centres d'intérêt</text:p>
+                ${paragraphsFromLines(rawInterets, 'P-Body')}`;
             }
+
+            const contentXml = '<?xml version="1.0" encoding="UTF-8"?>'
+                + '<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" office:version="1.2">'
+                + '<office:automatic-styles>' + automaticStyles + '</office:automatic-styles>'
+                + '<office:body><office:text>' + bodyXml + '</office:text></office:body>'
+                + '</office:document-content>';
+
+            const stylesXml = '<?xml version="1.0" encoding="UTF-8"?>'
+                + '<office:document-styles xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" office:version="1.2">'
+                + '<office:styles><style:default-style style:family="paragraph"><style:text-properties fo:font-family="' + fontFamily + '"/></style:default-style></office:styles>'
+                + '<office:automatic-styles><style:page-layout style:name="pm1"><style:page-layout-properties fo:margin="1.5cm"/></style:page-layout></office:automatic-styles>'
+                + '<office:master-styles><style:master-page style:name="Standard" style:page-layout-name="pm1"/></office:master-styles>'
+                + '</office:document-styles>';
+
+            const metaXml = '<?xml version="1.0" encoding="UTF-8"?>'
+                + '<office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" office:version="1.2">'
+                + '<office:meta><meta:generator>Générateur de CV</meta:generator></office:meta>'
+                + '</office:document-meta>';
+
+            let manifestEntries = '<manifest:file-entry manifest:full-path="/" manifest:version="1.2" manifest:media-type="application/vnd.oasis.opendocument.text"/>'
+                + '<manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>'
+                + '<manifest:file-entry manifest:full-path="styles.xml" manifest:media-type="text/xml"/>'
+                + '<manifest:file-entry manifest:full-path="meta.xml" manifest:media-type="text/xml"/>';
+            embeddedFiles.forEach(f => {
+                manifestEntries += '<manifest:file-entry manifest:full-path="' + f.name + '" manifest:media-type="' + f.mediaType + '"/>';
+            });
+
+            const manifestXml = '<?xml version="1.0" encoding="UTF-8"?>'
+                + '<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">'
+                + manifestEntries + '</manifest:manifest>';
+
+            const encoder = new TextEncoder();
+            const files = [
+                { name: 'mimetype', data: encoder.encode('application/vnd.oasis.opendocument.text') },
+                { name: 'META-INF/manifest.xml', data: encoder.encode(manifestXml) },
+                { name: 'content.xml', data: encoder.encode(contentXml) },
+                { name: 'styles.xml', data: encoder.encode(stylesXml) },
+                { name: 'meta.xml', data: encoder.encode(metaXml) },
+            ];
+            embeddedFiles.forEach(f => files.push({ name: f.name, data: f.data }));
+
+            const zipBytes = buildZip(files);
+            const blob = new Blob([zipBytes], { type: 'application/vnd.oasis.opendocument.text' });
+            const url = URL.createObjectURL(blob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = 'Mon_CV.odt';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
             document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>
